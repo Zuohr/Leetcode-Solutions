@@ -735,6 +735,8 @@ public class Solution {
 	}
 
 	/**
+	 * $(Gray Code)
+	 * 
 	 * The gray code is a binary numeral system where two successive values
 	 * differ in only one bit.
 	 * 
@@ -753,7 +755,7 @@ public class Solution {
 	 * sequence. Sorry about that.
 	 */
 
-	public ArrayList<Integer> grayCode(int n) {
+	public ArrayList<Integer> grayCodeQuadratic(int n) {
 		int size = (int) Math.pow(2, (double) n);
 		ArrayList<Integer> nums = new ArrayList<Integer>(size);
 		if (n == 0) {
@@ -778,12 +780,15 @@ public class Solution {
 		return nums;
 	}
 
-	@Test
-	public void testGreyCode() {
-		ArrayList<Integer> result = grayCode(10);
-		for (Integer num : result) {
-			System.out.println(num);
+	public ArrayList<Integer> grayCode(int n) {
+		ArrayList<Integer> result = new ArrayList<Integer>();
+		if (n >= 0) {
+			int num = 1 << n;
+			for (int i = 0; i < num; i++) {
+				result.add(i >> 1 ^ i);
+			}
 		}
+		return result;
 	}
 
 	/**
@@ -887,7 +892,7 @@ public class Solution {
 	}
 
 	/*
-	 * Solution 2 : more efficient and less complex than the previous one, user
+	 * Solution 2 : more efficient and less complex than the previous one, uses
 	 * recursion, not able to identify duplicated cases.
 	 */
 	public ArrayList<ArrayList<Integer>> permuteImproved(int[] num) {
@@ -926,90 +931,57 @@ public class Solution {
 	 * Solution 3: (optimal) use next_permutation algorithm
 	 */
 	public ArrayList<ArrayList<Integer>> permute(int[] num) {
-		if (num == null) {
-			return null;
-		}
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (num.length == 0) {
-			result.add(new ArrayList<Integer>());
-			return result;
-		}
-		if (num.length == 1) {
-			ArrayList<Integer> newArr = new ArrayList<Integer>();
-			newArr.add(num[0]);
-			result.add(newArr);
+		if (num == null) {
 			return result;
 		}
 
 		Arrays.sort(num);
-		int end = num.length - 1;
-		while (true) {
-			ArrayList<Integer> newArr = new ArrayList<Integer>();
+		do {
+			ArrayList<Integer> permutation = new ArrayList<Integer>();
 			for (int n : num) {
-				newArr.add(n);
+				permutation.add(n);
 			}
-			result.add(newArr);
-			if (!nextPermutation(num, 0, end)) {
-				break;
-			}
-		}
+			result.add(permutation);
+		} while (nextPermutation(num, 0, num.length - 1));
 
 		return result;
 	}
 
-	private boolean nextPermutation(int[] num, int start, int end) {
+	public boolean nextPermutation(int[] num, int start, int end) {
+		int tail = end;
+		while (tail > start && num[tail] <= num[tail - 1]) {
+			tail--;
+		}
+		if (tail <= start) {
+			return false;
+		}
+		int head = tail - 1, ptr = end;
+		while (ptr > head && num[ptr] <= num[head]) {
+			ptr--;
+		}
+		arraySwap(num, head, ptr);
+		arrayReverse(num, tail, end);
+		return true;
+	}
+
+	public void arraySwap(int[] num, int p1, int p2) {
+		if (p1 == p2) {
+			return;
+		}
+		num[p1] ^= num[p2];
+		num[p2] ^= num[p1];
+		num[p1] ^= num[p2];
+	}
+
+	public void arrayReverse(int[] num, int start, int end) {
 		if (start == end) {
-			return false;
-		}
-		if (start > end) {
-			throw new RuntimeException("start larger than end");
-		}
-		int tailStart = end;
-		while (tailStart > start) {
-			if (num[tailStart] > num[tailStart - 1]) {
-				break;
-			} else {
-				tailStart--;
-			}
-		}
-		if (tailStart == start) {
-			arrayReverse(num, start, end);
-			return false;
-		} else {
-			int headEnd = tailStart - 1, index = end;
-			while (num[headEnd] >= num[index]) {
-				index--;
-			}
-			arraySwap(num, tailStart - 1, index);
-			arrayReverse(num, tailStart, end);
-			return true;
-		}
-	}
-
-	private void arraySwap(int[] num, int i, int j) {
-		if (i == j || i < 0 || i >= num.length || j < 0 || j >= num.length) {
 			return;
 		}
-		num[i] ^= num[j];
-		num[j] ^= num[i];
-		num[i] ^= num[j];
-	}
 
-	private void arrayReverse(int[] num, int i, int j) {
-		if (i >= j || i < 0 || i >= num.length || j < 0 || j >= num.length) {
-			return;
-		}
-		for (int adj = 0; adj < (j - i + 1) / 2; adj++) {
-			arraySwap(num, i + adj, j - adj);
-		}
-	}
-
-	@Test
-	public void testPermute() {
-		int[] num = { 3, 2, 1 };
-		ArrayList<ArrayList<Integer>> permutations = permute(num);
-		for (ArrayList<Integer> p : permutations) {
-			System.out.println(p);
+		int len = (end - start + 1) / 2;
+		for (int i = 0; i < len; i++) {
+			arraySwap(num, start + i, end - i);
 		}
 	}
 
@@ -1346,28 +1318,17 @@ public class Solution {
 	}
 
 	public int maxProfit(int[] prices) {
-		int maxProfit = 0;
-		if (prices != null && prices.length > 1) {
-			int min = prices[0];
-			for (int i = 1; i < prices.length; i++) {
-				if (prices[i] < min) {
-					min = prices[i];
-				} else if (prices[i] > min) {
-					int profit = prices[i] - min;
-					if (profit > maxProfit) {
-						maxProfit = profit;
-					}
-				}
-			}
+		if (prices == null || prices.length < 2) {
+			return 0;
+		}
+
+		int len = prices.length, low = prices[0], maxProfit = 0;
+		for (int i = 1; i < len; i++) {
+			low = Math.min(low, prices[i]);
+			maxProfit = Math.max(maxProfit, prices[i] - low);
 		}
 
 		return maxProfit;
-	}
-
-	@Test
-	public void testMaxProfit() {
-		int[] prices = { 21, 31, 30, 1000, 2, 1, 111, 10, 23, 45, 1, 112, 342 };
-		System.out.println(maxProfit(prices));
 	}
 
 	/**
@@ -2081,72 +2042,6 @@ public class Solution {
 	 * Could you come up with an one-pass algorithm using only constant space?
 	 */
 
-	/*
-	 * one pass, O(1) space, code over complicated! Use two pointers, all the
-	 * element on the left of lp (exclude lp) are 0, all the element on the
-	 * right of rp (exclude rp) are 2. Then lp can only be 1 or 2, rp can only
-	 * be 0 or 1, if(1) both lp and rp are 1, then use a third ponter to scan
-	 * the elements form lp to rp. If scanned value is 0, then swap with lp, if
-	 * 2 then swap with rp, skip 1. Or (2) not both are 1, then just swap them
-	 * and change the location of pointer accordingly. lp and rp always points
-	 * to the first element which is not the value they represent.
-	 */
-
-	public void sortColorsComplicated(int[] A) {
-		if (A != null && A.length > 1) {
-			int lp = 0, rp = A.length - 1, p = -1;
-			while (lp < rp && p < rp) {
-				while (lp < A.length && A[lp] == 0) {
-					lp++;
-				}
-				if (lp >= A.length) {
-					break;
-				}
-				while (rp >= 0 && A[rp] == 2) {
-					rp--;
-				}
-				if (rp < 0) {
-					break;
-				}
-				if (lp >= rp) {
-					break;
-				}
-				if (A[lp] == 2 && A[rp] == 0) {
-					arraySwap(A, lp, rp);
-					lp++;
-					rp--;
-				} else if (A[lp] == 1 && A[rp] == 0) {
-					arraySwap(A, lp, rp);
-					lp++;
-				} else if (A[lp] == 2 && A[rp] == 1) {
-					arraySwap(A, lp, rp);
-					rp--;
-				} else {
-					if (p == -1) {
-						p = lp + 1;
-					} else {
-						p++;
-					}
-					while (p < A.length && A[p] == 1) {
-						p++;
-					}
-					if (p < rp) {
-						if (A[p] == 0) {
-							A[lp++] = 0;
-							A[p] = 1;
-						} else {
-							A[rp--] = 2;
-							A[p] = 1;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/*
-	 * Much simpler isn't it...
-	 */
 	public void sortColors(int[] A) {
 		if (A != null && A.length > 1) {
 			int len = A.length, lp = 0, rp = len - 1, p = 0;
@@ -2165,7 +2060,7 @@ public class Solution {
 		}
 	}
 
-	private boolean nextNBand(int[] a, int band) {
+	public boolean nextNBand(int[] a, int band) {
 		if (a == null) {
 			throw new RuntimeException("Null array");
 		}
@@ -2193,17 +2088,6 @@ public class Solution {
 		}
 
 		return true;
-	}
-
-	@Test
-	public void testSortColors() {
-		int[] arr = { 0, 0, 0, 0, 0, 0 };
-		do {
-			System.out.print(Arrays.toString(arr) + " -> ");
-			int[] A = Arrays.copyOf(arr, arr.length);
-			sortColors(A);
-			System.out.println(Arrays.toString(A));
-		} while (nextNBand(arr, 3));
 	}
 
 	/**
