@@ -1111,34 +1111,6 @@ public class Solution {
 		return root;
 	}
 
-	private void binaryTreeAdd(TreeNode root, int num) {
-		TreeNode parent = null;
-		TreeNode ptr = root;
-		while (ptr != null) {
-			if (num < ptr.val) {
-				parent = ptr;
-				ptr = ptr.left;
-			} else {
-				parent = ptr;
-				ptr = ptr.right;
-			}
-		}
-		if (parent == null) {
-			root = new TreeNode(num);
-			root.left = null;
-			root.right = null;
-		} else {
-			TreeNode newNode = new TreeNode(num);
-			newNode.left = null;
-			newNode.right = null;
-			if (num < parent.val) {
-				parent.left = newNode;
-			} else {
-				parent.right = newNode;
-			}
-		}
-	}
-
 	private void printBST(TreeNode root) {
 		if (root == null) {
 			return;
@@ -1451,47 +1423,29 @@ public class Solution {
 
 	public ArrayList<ArrayList<Integer>> levelOrder(TreeNode root) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (root != null) {
+		if (root == null) {
+			return result;
+		}
+
+		ArrayList<TreeNode> last = new ArrayList<TreeNode>();
+		last.add(root);
+		while (!last.isEmpty()) {
+			ArrayList<Integer> layer = new ArrayList<Integer>();
 			ArrayList<TreeNode> next = new ArrayList<TreeNode>();
-			next.add(root);
-			Queue<ArrayList<TreeNode>> q = new LinkedList<ArrayList<TreeNode>>();
-			q.add(next);
-			while (!q.isEmpty()) {
-				ArrayList<TreeNode> curr = q.remove();
-				next = new ArrayList<TreeNode>();
-				ArrayList<Integer> newArr = new ArrayList<Integer>();
-				for (TreeNode node : curr) {
-					newArr.add(node.val);
-					if (node.left != null) {
-						next.add(node.left);
-					}
-					if (node.right != null) {
-						next.add(node.right);
-					}
+			for (TreeNode node : last) {
+				layer.add(node.val);
+				if (node.left != null) {
+					next.add(node.left);
 				}
-				if (!next.isEmpty()) {
-					q.add(next);
+				if (node.right != null) {
+					next.add(node.right);
 				}
-				result.add(newArr);
 			}
+			result.add(layer);
+			last = next;
 		}
 
 		return result;
-	}
-
-	@Test
-	public void testLevelOrder() {
-		TreeNode root = new TreeNode(10);
-		binaryTreeAdd(root, 7);
-		binaryTreeAdd(root, 8);
-		binaryTreeAdd(root, 9);
-		binaryTreeAdd(root, 11);
-		binaryTreeAdd(root, 12);
-		binaryTreeAdd(root, 13);
-		ArrayList<ArrayList<Integer>> res = levelOrderBottom(root);
-		for (ArrayList<Integer> arr : res) {
-			System.out.println(arr);
-		}
 	}
 
 	/**
@@ -1555,31 +1509,24 @@ public class Solution {
 	 */
 
 	public int uniquePaths(int m, int n) {
-		int[][] matrix = new int[m][n];
-		for (int i = 0; i < n; i++) {
-			matrix[0][i] = 1;
+		if (m <= 0 || n <= 0) {
+			return 0;
 		}
-		for (int i = 0; i < m; i++) {
-			matrix[i][0] = 1;
+
+		int[][] dp = new int[m][n];
+		for (int r = 0; r < m; r++) {
+			dp[r][n - 1] = 1;
 		}
-		for (int row = 1; row < m; row++) {
-			for (int col = 1; col < n; col++) {
-				int up = matrix[row - 1][col];
-				int left = matrix[row][col - 1];
-				int rest = Integer.MAX_VALUE - up;
-				if (left > rest) {
-					return Integer.MAX_VALUE;
-				}
-				matrix[row][col] = up + left;
+		for (int c = 0; c < n; c++) {
+			dp[m - 1][c] = 1;
+		}
+		for (int r = m - 2; r >= 0; r--) {
+			for (int c = n - 2; c >= 0; c--) {
+				dp[r][c] = dp[r + 1][c] + dp[r][c + 1];
 			}
 		}
 
-		return matrix[m - 1][n - 1];
-	}
-
-	@Test
-	public void testUniquePath() {
-		System.out.println(uniquePaths(100, 8));
+		return dp[0][0];
 	}
 
 	/**
@@ -1592,7 +1539,7 @@ public class Solution {
 	 * Note: You can only move either down or right at any point in time.
 	 */
 
-	public int minPathSum(int[][] grid) {
+	public int minPathSum3(int[][] grid) {
 		int w = grid[0].length;
 		int h = grid.length;
 		int[][] m = new int[h][w];
@@ -1612,10 +1559,27 @@ public class Solution {
 		return m[0][0];
 	}
 
+	public int minPathSum(int[][] grid) {
+		int h = grid.length, w = grid[0].length;
+		for (int r = h - 1; r >= 0; r--) {
+			for (int c = w - 1; c >= 0; c--) {
+				if (r != h - 1 && c != w - 1) {
+					grid[r][c] += Math.min(r + 1 < h ? grid[r + 1][c]
+							: Integer.MAX_VALUE, c + 1 < w ? grid[r][c + 1]
+							: Integer.MAX_VALUE);
+				}
+			}
+		}
+		return grid[0][0];
+	}
+
 	@Test
 	public void testMinPathSum() {
-		int[][] grid = { { 1, 2, 4 }, { 3, 10, 6 }, { 2, 2, 1 } };
+		int[][] grid = { { 1, 2 }, { 1, 1 } };
 		System.out.println(minPathSum(grid));
+		for (int[] row : grid) {
+			System.out.println(Arrays.toString(row));
+		}
 	}
 
 	/**
@@ -1707,31 +1671,25 @@ public class Solution {
 	 * which points to the shorter end moves inward by one, because the area
 	 * will only reduce by moving the pointer at longer end.
 	 */
+	
 	public int maxArea(int[] height) {
-		if (height == null || height.length < 2) {
-			return 0;
-		}
-		int left = 0, right = height.length - 1;
-		int max = (right - left) * Math.min(height[left], height[right]);
-		while (left < right) {
-			if (height[left] <= height[right]) {
-				left++;
-			} else {
-				right--;
-			}
-			int area = (right - left) * Math.min(height[left], height[right]);
-			if (area > max) {
-				max = area;
-			}
-		}
-		return max;
-	}
-
-	@Test
-	public void testMaxArea() {
-		int[] height = { 3, 2, 8, 2, 2, 3, 8, 3, };
-		System.out.println(maxArea(height));
-	}
+        if(height == null || height.length < 2) {
+            return 0;
+        }
+        
+        int len = height.length, left = 0, right = len - 1, maxArea = 0;
+        while(left < right) {
+            if(height[left] < height[right]) {
+                maxArea = Math.max(maxArea, height[left] * (right - left));
+                left++;
+            } else {
+                maxArea = Math.max(maxArea, height[right] * (right - left));
+                right--;
+            }
+        }
+        
+        return maxArea;
+    }
 
 	/**
 	 * $(Rotate Image)
@@ -1764,12 +1722,19 @@ public class Solution {
 		}
 	}
 
-	@Test
-	public void testRotate() {
-		int[][] matrix = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
-		rotate(matrix);
-		for (int[] arr : matrix) {
-			System.out.println(Arrays.toString(arr));
+	public void rotate2(int[][] matrix) {
+		int len = matrix.length;
+		for (int r = 0; r < len / 2; r++) {
+			for (int c = r; c < len - 1 - r; c++) {
+				int r1 = r, c1 = c, temp = matrix[r1][c1];
+				int r2 = c1, c2 = len - 1 - r1;
+				int r3 = c2, c3 = len - 1 - r2;
+				int r4 = c3, c4 = len - 1 - r3;
+				matrix[r1][c1] = matrix[r4][c4];
+				matrix[r4][c4] = matrix[r3][c3];
+				matrix[r3][c3] = matrix[r2][c2];
+				matrix[r2][c2] = temp;
+			}
 		}
 	}
 
@@ -1787,34 +1752,24 @@ public class Solution {
 	public ArrayList<String> generateParenthesis(int n) {
 		ArrayList<String> result = new ArrayList<String>();
 		if (n > 0) {
-			int open = n, close = 0;
-			generateParenthesis(result, "", open, close);
+			generateParenthesisDFS(result, "", n, 0);
 		}
 		return result;
 	}
 
-	private void generateParenthesis(ArrayList<String> result, String sofar,
-			int open, int close) {
-		if (open == 0 && close == 0) {
+	public void generateParenthesisDFS(ArrayList<String> result, String sofar,
+			int toOpen, int toClose) {
+		if (toClose == 0 && toOpen == 0) {
 			result.add(sofar);
 			return;
 		}
-		if (open > 0) {
-			sofar += "(";
-			generateParenthesis(result, sofar, open - 1, close + 1);
-			sofar = sofar.substring(0, sofar.length() - 1);
-		}
-		if (close > 0) {
-			sofar += ")";
-			generateParenthesis(result, sofar, open, close - 1);
-		}
-	}
 
-	@Test
-	public void testGenerateParenthesis() {
-		ArrayList<String> result = generateParenthesis(0);
-		for (String s : result) {
-			System.out.println(s);
+		if (toClose > 0) {
+			generateParenthesisDFS(result, sofar + ")", toOpen, toClose - 1);
+		}
+
+		if (toOpen > 0) {
+			generateParenthesisDFS(result, sofar + "(", toOpen - 1, toClose + 1);
 		}
 	}
 
@@ -1975,52 +1930,47 @@ public class Solution {
 	 */
 
 	public void setZeroes(int[][] matrix) {
-		if (matrix != null) {
-			int h = matrix.length;
-			int w = matrix[0].length;
-			boolean l1 = false, clear = false;
+		if (matrix == null || matrix.length == 0 || matrix[0] == null
+				|| matrix[0].length == 0) {
+			return;
+		}
+
+		int h = matrix.length, w = matrix[0].length;
+		boolean clearFirstRow = false;
+		for (int c = 0; c < w; c++) {
+			if (matrix[0][c] == 0) {
+				clearFirstRow = true;
+				break;
+			}
+		}
+
+		for (int r = 1; r < h; r++) {
+			boolean clear = false;
 			for (int c = 0; c < w; c++) {
-				if (matrix[0][c] == 0) {
-					l1 = true;
-					break;
-				}
-			}
-			for (int r = 1; r < h; r++) {
-				for (int c = 0; c < w; c++) {
-					if (matrix[r][c] == 0) {
-						matrix[0][c] = 0;
-						clear = true;
-					}
-				}
-				if (clear) {
-					for (int c = 0; c < w; c++) {
-						matrix[r][c] = 0;
-					}
-				}
-				clear = false;
-			}
-			for (int c = 0; c < w; c++) {
-				if (matrix[0][c] == 0) {
-					for (int r = 0; r < h; r++) {
-						matrix[r][c] = 0;
-					}
-				}
-			}
-			if (l1) {
-				for (int c = 0; c < w; c++) {
+				if (matrix[r][c] == 0) {
+					clear = true;
 					matrix[0][c] = 0;
 				}
 			}
+			if (clear) {
+				for (int c = 0; c < w; c++) {
+					matrix[r][c] = 0;
+				}
+			}
 		}
-	}
 
-	@Test
-	public void testSetZeros() {
-		int[][] matrix = { { 1, 0, 9, 0, 9, 9, 0, 9 },
-				{ 9, 9, 9, 9, 9, 9, 9, 9, }, { 0, 9, 9, 9, 9, 9, 9, 9, } };
-		setZeroes(matrix);
-		for (int[] arr : matrix) {
-			System.out.println(Arrays.toString(arr));
+		for (int c = 0; c < w; c++) {
+			if (matrix[0][c] == 0) {
+				for (int r = 0; r < h; r++) {
+					matrix[r][c] = 0;
+				}
+			}
+		}
+
+		if (clearFirstRow) {
+			for (int c = 0; c < w; c++) {
+				matrix[0][c] = 0;
+			}
 		}
 	}
 
@@ -2155,50 +2105,24 @@ public class Solution {
 
 	public ListNode detectCycle(ListNode head) {
 		ListNode fast = head, slow = head;
-		while (true) {
-			if (fast == null) {
-				return null;
-			}
-			fast = fast.next;
-			if (fast == null) {
-				return null;
-			}
-			fast = fast.next;
+		while (fast != null && fast.next != null) {
+			fast = fast.next.next;
 			slow = slow.next;
-			if (fast == slow) {
+			if (slow == fast) {
 				break;
 			}
 		}
 
+		if (fast == null || fast.next == null) {
+			return null;
+		}
+
 		slow = head;
 		while (slow != fast) {
-			slow = slow.next;
 			fast = fast.next;
+			slow = slow.next;
 		}
-
 		return fast;
-	}
-
-	@Test
-	public void testDetectCycle() {
-		ListNode head = new ListNode(0);
-		ListNode a1 = new ListNode(1);
-		ListNode a2 = new ListNode(2);
-		ListNode a3 = new ListNode(3);
-		ListNode a4 = new ListNode(4);
-		ListNode a5 = new ListNode(5);
-		head.next = a1;
-		a1.next = a2;
-		a2.next = head;
-		a3.next = a4;
-		a4.next = a5;
-		a5.next = null;
-		ListNode ptr = detectCycle(a4);
-		if (ptr == null) {
-			System.out.println("null");
-		} else {
-			System.out.println(ptr.val);
-		}
 	}
 
 	/**
