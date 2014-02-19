@@ -1671,25 +1671,25 @@ public class Solution {
 	 * which points to the shorter end moves inward by one, because the area
 	 * will only reduce by moving the pointer at longer end.
 	 */
-	
+
 	public int maxArea(int[] height) {
-        if(height == null || height.length < 2) {
-            return 0;
-        }
-        
-        int len = height.length, left = 0, right = len - 1, maxArea = 0;
-        while(left < right) {
-            if(height[left] < height[right]) {
-                maxArea = Math.max(maxArea, height[left] * (right - left));
-                left++;
-            } else {
-                maxArea = Math.max(maxArea, height[right] * (right - left));
-                right--;
-            }
-        }
-        
-        return maxArea;
-    }
+		if (height == null || height.length < 2) {
+			return 0;
+		}
+
+		int len = height.length, left = 0, right = len - 1, maxArea = 0;
+		while (left < right) {
+			if (height[left] < height[right]) {
+				maxArea = Math.max(maxArea, height[left] * (right - left));
+				left++;
+			} else {
+				maxArea = Math.max(maxArea, height[right] * (right - left));
+				right--;
+			}
+		}
+
+		return maxArea;
+	}
 
 	/**
 	 * $(Rotate Image)
@@ -1896,25 +1896,34 @@ public class Solution {
 		return head;
 	}
 
-	@Test
-	public void testRemoveNthFromEnd() {
-		ListNode head = new ListNode(0);
-		ListNode p = head;
-		for (int i = 1; i < 10; i++) {
-			ListNode newNode = new ListNode(i);
-			p.next = newNode;
-			p = newNode;
+	/*
+	 * use dummy head
+	 */
+	public ListNode removeNthFromEndDummyHead(ListNode head, int n) {
+		if (n <= 0) {
+			return head;
 		}
-		printLinkedList(head);
-		int len = 10;
-		for (int i = 0; i < 10; i++) {
-			int r = new Random().nextInt(len) + 1;
-			System.out.print(r + ": ");
-			head = removeNthFromEnd(head, r);
-			printLinkedList(head);
-			System.out.println();
-			len--;
+
+		ListNode dummy = new ListNode(0);
+		dummy.next = head;
+		ListNode front = dummy, back = dummy;
+
+		int cnt = 0;
+		for (; cnt <= n && front != null; cnt++) {
+			front = front.next;
 		}
+		if (cnt <= n) {
+			return head;
+		}
+
+		dummy.next = head;
+		while (front != null) {
+			front = front.next;
+			back = back.next;
+		}
+		back.next = back.next.next;
+		head = dummy.next;
+		return head;
 	}
 
 	/**
