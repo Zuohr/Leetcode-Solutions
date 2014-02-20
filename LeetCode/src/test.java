@@ -1,9 +1,10 @@
 
 public class test {
 	public static void main(String[] args) {
-		String str1 = new String("123");
-		String str2 = new String("123");
-		System.out.println(str1 == str2);
+		int i = Integer.MIN_VALUE;
+		System.out.println(Integer.toBinaryString(i));
+		int j = ~i + 1;
+		System.out.println(j);
 	}
 
 }
