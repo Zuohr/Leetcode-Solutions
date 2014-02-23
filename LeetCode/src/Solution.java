@@ -805,8 +805,7 @@ public class Solution {
 			return false;
 		}
 
-		int height = matrix.length, width = matrix[0].length, len = height
-				* width;
+		int width = matrix[0].length, len = matrix.length * width;
 		int start = 0, end = len - 1;
 		while (start <= end) {
 			int mid = start + (end - start) / 2;
@@ -1793,37 +1792,33 @@ public class Solution {
 	 */
 
 	public int[] plusOne(int[] digits) {
-		if (digits == null || digits.length == 0) {
-			return new int[] { 1 };
-		}
-		int len = digits.length, index = len - 1;
-		digits[index] += 1;
-		while (index >= 0 && digits[index] == 10) {
-			digits[index] = 0;
-			if (--index >= 0) {
-				digits[index] += 1;
-			}
-		}
-		if (index == -1) {
-			len += 1;
-			int[] newArr = new int[len];
-			newArr[0] = 1;
-			for (int i = 1; i < len; i++) {
-				newArr[i] = digits[i - 1];
-			}
-			digits = newArr;
+		if (digits == null) {
+			return null;
 		}
 
-		return digits;
-	}
-
-	@Test
-	public void testPlusOne() {
-		int[] digits = { 1, 3, 4, 7, 9, 9, 1 };
-		for (int i = 0; i < 10000; i++) {
-			digits = plusOne(digits);
+		int len = digits.length, carry = 1, ptr = len - 1;
+		while (ptr >= 0 && carry == 1) {
+			int sum = digits[ptr] + carry;
+			if (sum >= 10) {
+				sum -= 10;
+				carry = 1;
+			} else {
+				carry = 0;
+			}
+			digits[ptr] = sum;
+			ptr--;
 		}
-		System.out.println(Arrays.toString(digits));
+
+		if (carry == 1) {
+			int[] result = new int[len + 1];
+			result[0] = carry;
+			for (int i = 1; i < result.length; i++) {
+				result[i] = digits[i - 1];
+			}
+			return result;
+		} else {
+			return digits;
+		}
 	}
 
 	/**
@@ -2039,45 +2034,23 @@ public class Solution {
 		if (root == null) {
 			return false;
 		}
-		return hasPathSumHelper(root, sum);
+
+		return hasPathSum(root, 0, sum);
 	}
 
-	private boolean hasPathSumHelper(TreeNode root, int sum) {
+	public boolean hasPathSum(TreeNode root, int sofar, int target) {
 		if (root.left == null && root.right == null) {
-			if (sum == root.val) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		if (root.left == null) {
-			return hasPathSumHelper(root.right, sum - root.val);
-		} else if (root.right == null) {
-			return hasPathSumHelper(root.left, sum - root.val);
+			return root.val + sofar == target;
+		} else if (root.left != null && root.right == null) {
+			return hasPathSum(root.left, sofar + root.val, target);
+		} else if (root.left == null && root.right != null) {
+			return hasPathSum(root.right, sofar + root.val, target);
 		} else {
-			if (hasPathSumHelper(root.left, sum - root.val)) {
-				return true;
+			if (!hasPathSum(root.left, sofar + root.val, target)) {
+				return hasPathSum(root.right, sofar + root.val, target);
 			} else {
-				return hasPathSumHelper(root.right, sum - root.val);
+				return true;
 			}
-		}
-	}
-
-	@Test
-	public void testHasPathSum() {
-		TreeNode root = new TreeNode(6);
-		root.left = new TreeNode(4);
-		root.left.left = new TreeNode(11);
-		root.left.left.left = new TreeNode(7);
-		root.left.left.right = new TreeNode(2);
-		root.right = new TreeNode(8);
-		root.right.left = new TreeNode(13);
-		root.right.right = new TreeNode(4);
-		root.right.right.right = new TreeNode(1);
-		ArrayList<Integer> arr = inorderTraversalIterative(root);
-		System.out.println(arr);
-		for (int i = 0; i <= 28; i++) {
-			System.out.println(i + " " + hasPathSum(root, i));
 		}
 	}
 
@@ -6191,6 +6164,43 @@ public class Solution {
 		return s.substring(pair[0], pair[1]);
 	}
 
+	/*
+	 * DP solution
+	 */
+	public String longestPalindromeDP(String s) {
+		if (s == null || s.isEmpty()) {
+			return s;
+		}
+
+		int len = s.length();
+		int maxLen = 0;
+		int[] position = new int[2];
+		boolean[][] dp = new boolean[len][len];
+		for (int row = len - 1; row >= 0; row--) {
+			for (int col = row; col < len; col++) {
+				if (row == col) {
+					dp[row][col] = true;
+				} else if (col - row == 1 && s.charAt(row) == s.charAt(col)) {
+					dp[row][col] = true;
+				} else {
+					dp[row][col] = dp[row + 1][col - 1]
+							&& s.charAt(row) == s.charAt(col);
+				}
+
+				if (dp[row][col]) {
+					int currLen = col - row + 1;
+					if (currLen > maxLen) {
+						maxLen = currLen;
+						position[0] = row;
+						position[1] = col + 1;
+					}
+				}
+			}
+		}
+
+		return s.substring(position[0], position[1]);
+	}
+
 	/**
 	 * $(Recover Binary Search Tree)
 	 * 
@@ -6858,30 +6868,27 @@ public class Solution {
 
 		int lenS = S.length(), lenT = T.length();
 		int[][] dp = new int[lenT][lenS];
-		if (S.charAt(0) == T.charAt(0)) {
-			dp[0][0] = 1;
-		} else {
-			dp[0][0] = 0;
-		}
-		for (int i = 1; i < lenS; i++) {
-			if (S.charAt(i) == T.charAt(0)) {
-				dp[0][i] = dp[0][i - 1] + 1;
+
+		for (int col = 0; col < lenS; col++) {
+			if (S.charAt(col) == T.charAt(0)) {
+				dp[0][col] = (col == 0 ? 1 : dp[0][col - 1] + 1);
 			} else {
-				dp[0][i] = dp[0][i - 1];
+				dp[0][col] = (col == 0 ? 0 : dp[0][col - 1]);
 			}
 		}
-		for (int i = 1; i < lenT; i++) {
-			dp[i][0] = 0;
+		for (int row = 1; row < lenT; row++) {
+			dp[row][0] = 0;
 		}
 
-		for (int r = 1; r < lenT; r++) {
-			for (int c = 1; c < lenS; c++) {
-				dp[r][c] = dp[r][c - 1];
-				if (T.charAt(r) == S.charAt(c)) {
-					dp[r][c] += dp[r - 1][c - 1];
+		for (int row = 1; row < lenT; row++) {
+			for (int col = row; col < lenS; col++) {
+				dp[row][col] = dp[row][col - 1];
+				if (S.charAt(col) == T.charAt(row)) {
+					dp[row][col] += dp[row - 1][col - 1];
 				}
 			}
 		}
+
 		return dp[lenT - 1][lenS - 1];
 	}
 
@@ -7089,37 +7096,34 @@ public class Solution {
 	 */
 
 	public boolean isInterleave(String s1, String s2, String s3) {
-		if (s1 == null || s2 == null || s3 == null) {
+		if (s1 == null || s2 == null || s3 == null
+				|| s1.length() + s2.length() != s3.length()) {
 			return false;
-		}
-
-		if (s1.isEmpty()) {
-			return s3.equals(s2);
-		} else if (s2.isEmpty()) {
-			return s3.equals(s1);
 		}
 
 		int len1 = s1.length(), len2 = s2.length();
-		if (len1 + len2 != s3.length()) {
-			return false;
+		boolean[][] dp = new boolean[len1 + 1][len2 + 1];
+		dp[0][0] = true;
+		for (int col = 1; col <= len2; col++) {
+			dp[0][col] = s3.charAt(col - 1) == s2.charAt(col - 1)
+					&& dp[0][col - 1];
+		}
+		for (int row = 1; row <= len1; row++) {
+			dp[row][0] = s3.charAt(row - 1) == s1.charAt(row - 1)
+					&& dp[row - 1][0];
 		}
 
-		boolean[][] m = new boolean[len1 + 1][len2 + 1];
-		m[0][0] = true;
-		for (int r = 1; r <= len1; r++) {
-			m[r][0] = s1.charAt(r - 1) == s3.charAt(r - 1) && m[r - 1][0];
-		}
-		for (int c = 1; c <= len2; c++) {
-			m[0][c] = s2.charAt(c - 1) == s3.charAt(c - 1) && m[0][c - 1];
-		}
-		for (int r = 1; r <= len1; r++) {
-			for (int c = 1; c <= len2; c++) {
-				char ch = s3.charAt(r + c - 1);
-				m[r][c] = (ch == s1.charAt(r - 1) && m[r - 1][c])
-						|| (ch == s2.charAt(c - 1) && m[r][c - 1]);
+		for (int row = 1; row <= len1; row++) {
+			for (int col = 1; col <= len2; col++) {
+				char ch1 = s1.charAt(row - 1);
+				char ch2 = s2.charAt(col - 1);
+				char ch3 = s3.charAt(row + col - 1);
+				dp[row][col] = (ch1 == ch3 && dp[row - 1][col])
+						|| (ch2 == ch3 && dp[row][col - 1]);
 			}
 		}
-		return m[len1][len2];
+
+		return dp[len1][len2];
 	}
 
 	/**
