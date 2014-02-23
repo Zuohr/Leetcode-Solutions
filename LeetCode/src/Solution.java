@@ -3533,26 +3533,52 @@ public class Solution {
 	 */
 
 	/*
-	 * Use a pointer to scan the array to extend the maximum reachable border
-	 * until border pass the target or the pointer reaches the border.
+	 * greedy solution : use a pointer to scan the array to extend the maximum
+	 * reachable border until border pass the target or the pointer reaches the
+	 * border.
 	 */
 	public boolean canJump(int[] A) {
-		int len = A.length;
-		if (len == 1) {
-			return true;
+		if (A == null || A.length == 0) {
+			return false;
 		}
-		for (int end = A[0], i = 0; i < len - 1; i++) {
-			if (i + A[i] > end) {
-				end = i + A[i];
+
+		int len = A.length, start = 0, end = A[0];
+		while (true) {
+			if (start < len && start <= end) {
+				end = Math.max(end, start + A[start]);
+			} else {
+				return false;
 			}
 			if (end >= len - 1) {
 				return true;
 			}
-			if (i >= end) {
-				return false;
+			start++;
+		}
+	}
+
+	/*
+	 * sequence DP, dp[i] denotes whether i can be reached from 0. To get dp[i],
+	 * we try to find a position j, 0 <= j < i, that is reachable and can jump
+	 * to i directly.
+	 */
+	public boolean canJumpDP(int[] A) {
+		if (A == null || A.length == 0) {
+			return false;
+		}
+
+		int len = A.length;
+		boolean[] dp = new boolean[len];
+		dp[0] = true;
+		for (int i = 1; i < len; i++) {
+			for (int j = 0; j < i; j++) {
+				if (dp[j] && j + A[j] >= i) {
+					dp[i] = true;
+					break;
+				}
 			}
 		}
-		return false;
+
+		return dp[len - 1];
 	}
 
 	/**
@@ -4949,41 +4975,31 @@ public class Solution {
 	 */
 
 	public int minDistance(String word1, String word2) {
-		int h = word1.length() + 1;
-		int w = word2.length() + 1;
-		int[][] m = new int[h][w];
-		for (int r = 0; r < h; r++) {
-			m[r][0] = r;
+		if (word1 == null || word2 == null) {
+			return 0;
 		}
-		for (int c = 0; c < w; c++) {
-			m[0][c] = c;
+
+		int len1 = word1.length(), len2 = word2.length();
+		int[][] dp = new int[len1 + 1][len2 + 1];
+		dp[0][0] = 0;
+		for (int col = 1; col <= len2; col++) {
+			dp[0][col] = col;
 		}
-		for (int r = 1; r < h; r++) {
-			for (int c = 1; c < w; c++) {
-				if (word1.charAt(r - 1) == word2.charAt(c - 1)) {
-					m[r][c] = m[r - 1][c - 1];
-				} else {
-					m[r][c] = 1 + Math.min(m[r - 1][c - 1],
-							Math.min(m[r - 1][c], m[r][c - 1]));
-				}
+		for (int row = 1; row <= len1; row++) {
+			dp[row][0] = row;
+		}
+
+		for (int row = 1; row <= len1; row++) {
+			for (int col = 1; col <= len2; col++) {
+				dp[row][col] = Math.min(dp[row - 1][col], dp[row][col - 1]) + 1;
+				int adj = (word1.charAt(row - 1) == word2.charAt(col - 1) ? 0
+						: 1);
+				dp[row][col] = Math.min(dp[row - 1][col - 1] + adj,
+						dp[row][col]);
 			}
 		}
 
-		return m[h - 1][w - 1];
-	}
-
-	@Test
-	public void testMinDistance() {
-		System.out.println(minDistance("food", "money"));
-		System.out.println(minDistance("park", "spake"));
-		System.out.println(minDistance("mark", "karma"));
-		System.out.println(minDistance("ea", "bn"));
-		System.out.println(minDistance("", "sea"));
-		System.out.println(minDistance("eat", ""));
-		System.out.println(minDistance("", ""));
-		System.out.println(minDistance("eat", "eat"));
-		System.out.println(minDistance("foobar", "barfoo"));
-		System.out.println(minDistance("face", "interface"));
+		return dp[len1][len2];
 	}
 
 	/**
@@ -5568,10 +5584,33 @@ public class Solution {
 		return count + 1;
 	}
 
-	@Test
-	public void testJump() {
-		int[] A = { 2, 3, 1, 1, 4 };
-		System.out.println(jump(A));
+	/*
+	 * sequence DP, dp[i] denotes the least step to reach i. To get dp[i], find
+	 * a position j, 0 <= j < i, if we can jump from j to i in one step, and j
+	 * is reachable from 0, then the least step needed to reach i is dp[j] + 1.
+	 * The trikey part is that we iterate from 0 to i to find j and we have to
+	 * stop if we find such j to save time, because the step from 0 to j will
+	 * only increase as j increases.
+	 */
+	public int jumpDP(int[] A) {
+		if (A == null || A.length == 0) {
+			return 0;
+		}
+
+		int len = A.length;
+		int[] dp = new int[len];
+		dp[0] = 0;
+		for (int i = 1; i < len; i++) {
+			dp[i] = Integer.MAX_VALUE;
+			for (int j = 0; j < i; j++) {
+				if (j + A[j] >= i && dp[j] != Integer.MAX_VALUE) {
+					dp[i] = dp[j] + 1;
+					break;
+				}
+			}
+		}
+
+		return dp[len - 1];
 	}
 
 	/**
