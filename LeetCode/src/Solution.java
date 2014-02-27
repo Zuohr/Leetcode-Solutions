@@ -1516,47 +1516,31 @@ public class Solution {
 	 * Note: You can only move either down or right at any point in time.
 	 */
 
-	public int minPathSum3(int[][] grid) {
-		int w = grid[0].length;
-		int h = grid.length;
-		int[][] m = new int[h][w];
-		m[h - 1][w - 1] = grid[h - 1][w - 1];
-		for (int i = w - 2; i >= 0; i--) {
-			m[h - 1][i] = grid[h - 1][i] + m[h - 1][i + 1];
-		}
-		for (int i = h - 2; i >= 0; i--) {
-			m[i][w - 1] = grid[i][w - 1] + m[i + 1][w - 1];
-		}
-		for (int r = h - 2; r >= 0; r--) {
-			for (int c = w - 2; c >= 0; c--) {
-				m[r][c] = grid[r][c] + Math.min(m[r + 1][c], m[r][c + 1]);
-			}
-		}
-
-		return m[0][0];
-	}
-
 	public int minPathSum(int[][] grid) {
-		int h = grid.length, w = grid[0].length;
-		for (int r = h - 1; r >= 0; r--) {
-			for (int c = w - 1; c >= 0; c--) {
-				if (r != h - 1 && c != w - 1) {
-					grid[r][c] += Math.min(r + 1 < h ? grid[r + 1][c]
-							: Integer.MAX_VALUE, c + 1 < w ? grid[r][c + 1]
-							: Integer.MAX_VALUE);
-				}
+		if (grid == null || grid.length == 0 || grid[0] == null
+				|| grid[0].length == 0) {
+			return 0;
+		}
+
+		int height = grid.length, width = grid[0].length;
+		int[][] dp = new int[height][width];
+		dp[height - 1][width - 1] = grid[height - 1][width - 1];
+		for (int col = width - 2; col >= 0; col--) {
+			dp[height - 1][col] = grid[height - 1][col]
+					+ dp[height - 1][col + 1];
+		}
+		for (int row = height - 2; row >= 0; row--) {
+			dp[row][width - 1] = grid[row][width - 1] + dp[row + 1][width - 1];
+		}
+
+		for (int row = height - 2; row >= 0; row--) {
+			for (int col = width - 2; col >= 0; col--) {
+				dp[row][col] = grid[row][col]
+						+ Math.min(dp[row + 1][col], dp[row][col + 1]);
 			}
 		}
-		return grid[0][0];
-	}
 
-	@Test
-	public void testMinPathSum() {
-		int[][] grid = { { 1, 2 }, { 1, 1 } };
-		System.out.println(minPathSum(grid));
-		for (int[] row : grid) {
-			System.out.println(Arrays.toString(row));
-		}
+		return dp[0][0];
 	}
 
 	/**
@@ -3535,7 +3519,7 @@ public class Solution {
 	/*
 	 * greedy solution : use a pointer to scan the array to extend the maximum
 	 * reachable border until border pass the target or the pointer reaches the
-	 * border.
+	 * border. O(n)
 	 */
 	public boolean canJump(int[] A) {
 		if (A == null || A.length == 0) {
@@ -3559,7 +3543,7 @@ public class Solution {
 	/*
 	 * sequence DP, dp[i] denotes whether i can be reached from 0. To get dp[i],
 	 * we try to find a position j, 0 <= j < i, that is reachable and can jump
-	 * to i directly.
+	 * to i directly. O(n^2)
 	 */
 	public boolean canJumpDP(int[] A) {
 		if (A == null || A.length == 0) {
@@ -3831,47 +3815,38 @@ public class Solution {
 	 */
 
 	public int uniquePathsWithObstacles(int[][] obstacleGrid) {
-		int w = obstacleGrid[0].length;
-		int h = obstacleGrid.length;
-		int[][] dpm = new int[h][w];
-		if (obstacleGrid[h - 1][w - 1] == 1) {
+		if (obstacleGrid == null || obstacleGrid.length == 0
+				|| obstacleGrid[0] == null || obstacleGrid[0].length == 0) {
 			return 0;
 		}
-		dpm[h - 1][w - 1] = 1;
-		boolean flag = false;
-		for (int c = w - 2; c >= 0; c--) {
-			if (obstacleGrid[h - 1][c] == 1) {
-				flag = true;
-			}
-			if (!flag) {
-				dpm[h - 1][c] = 1;
-			} else {
-				dpm[h - 1][c] = 0;
-			}
+
+		int height = obstacleGrid.length, width = obstacleGrid[0].length;
+		int[][] dp = new int[height][width];
+		if (obstacleGrid[height - 1][width - 1] == 1) {
+			dp[height - 1][width - 1] = 0;
+		} else {
+			dp[height - 1][width - 1] = 1;
 		}
-		flag = false;
-		for (int r = h - 2; r >= 0; r--) {
-			if (obstacleGrid[r][w - 1] == 1) {
-				flag = true;
-			}
-			if (!flag) {
-				dpm[r][w - 1] = 1;
-			} else {
-				dpm[r][w - 1] = 0;
-			}
+		for (int col = width - 2; col >= 0; col--) {
+			dp[height - 1][col] = (obstacleGrid[height - 1][col] == 1 ? 0
+					: dp[height - 1][col + 1]);
+		}
+		for (int row = height - 2; row >= 0; row--) {
+			dp[row][width - 1] = (obstacleGrid[row][width - 1] == 1 ? 0
+					: dp[row + 1][width - 1]);
 		}
 
-		for (int r = h - 2; r >= 0; r--) {
-			for (int c = w - 2; c >= 0; c--) {
-				if (obstacleGrid[r][c] == 1) {
-					dpm[r][c] = 0;
+		for (int row = height - 2; row >= 0; row--) {
+			for (int col = width - 2; col >= 0; col--) {
+				if (obstacleGrid[row][col] == 1) {
+					dp[row][col] = 0;
 				} else {
-					dpm[r][c] = dpm[r + 1][c] + dpm[r][c + 1];
+					dp[row][col] = dp[row][col + 1] + dp[row + 1][col];
 				}
 			}
 		}
 
-		return dpm[0][0];
+		return dp[0][0];
 	}
 
 	/**
@@ -5557,31 +5532,33 @@ public class Solution {
 	 * from index 0 to 1, then 3 steps to the last index.)
 	 */
 
+	/*
+	 * greedy solution
+	 */
 	public int jump(int[] A) {
-		if (A == null || A.length < 2) {
+		if (A == null || A.length <= 1) {
 			return 0;
 		}
-		int len = A.length;
-		int start = 0, end = A[0] + start, nextStart = end, nextEnd = end;
-		if (end >= len - 1) {
-			return 1;
-		}
-		int count = 1;
-		stop: while (true) {
+
+		int len = A.length, jump = 1;
+		int start = 0, end = A[start];
+		int nextStart = -1, nextEnd = -1;
+		while (true) {
+			if (end >= len - 1) {
+				break;
+			}
 			for (int i = end; i > start; i--) {
-				if (i + A[i] >= len - 1) {
-					break stop;
-				}
 				if (i + A[i] > nextEnd) {
-					nextEnd = i + A[i];
 					nextStart = i;
+					nextEnd = i + A[i];
 				}
 			}
 			start = nextStart;
 			end = nextEnd;
-			count++;
+			jump++;
 		}
-		return count + 1;
+
+		return jump;
 	}
 
 	/*
