@@ -4274,7 +4274,49 @@ public class Solution {
 	 * distinct solutions.
 	 */
 
+	/*
+	 * simple implementation, recommended
+	 */
 	public int totalNQueens(int n) {
+		if (n < 1) {
+			return 0;
+		}
+
+		int[] result = new int[1];
+		int[] rows = new int[n];
+		totalNQueens(result, rows, 0);
+		return result[0];
+	}
+
+	public void totalNQueens(int[] result, int[] rows, int row) {
+		int n = rows.length;
+		if (row == n) {
+			result[0]++;
+			return;
+		}
+
+		for (int col = 0; col < n; col++) {
+			if (canPut(rows, row, col)) {
+				rows[row] = col;
+				totalNQueens(result, rows, row + 1);
+				rows[row] = 0;
+			}
+		}
+	}
+
+	public boolean canPut(int[] rows, int row, int col) {
+		for (int i = 0; i < row; i++) {
+			if (rows[i] == col || Math.abs(col - rows[i]) == row - i) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/*
+	 * use bitmap to save board info
+	 */
+	public int totalNQueensBitMap(int n) {
 		if (n == 1) {
 			return 1;
 		} else if (n < 4) {
@@ -4329,18 +4371,6 @@ public class Solution {
 				slash ^= mslash;
 				bkslash ^= mbkslash;
 			}
-		}
-	}
-
-	@Test
-	public void testTotalNQueens() {
-		System.out.println(totalNQueens(12));
-		ArrayList<String[]> r = solveNQueens(4);
-		for (String[] sarr : r) {
-			for (String str : sarr) {
-				System.out.println(str);
-			}
-			System.out.println("---");
 		}
 	}
 
@@ -5887,55 +5917,54 @@ public class Solution {
 
 	public ArrayList<ArrayList<String>> partition(String s) {
 		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
-		if (s != null && s.length() > 0) {
-			int len = s.length();
-			boolean[][] m = new boolean[len][len];
-			StringBuilder sb = new StringBuilder();
-			sb.append(s.charAt(0));
-			for (int i = 1; i < len; i++) {
-				sb.append("*" + s.charAt(i));
-			}
-
-			int sblen = sb.length();
-			for (int i = 0; i < sblen; i++) {
-				m[i / 2][i / 2] = true;
-				int l, r;
-				if ((i & 1) == 0) {
-					l = i - 2;
-					r = i + 2;
-				} else {
-					l = i - 1;
-					r = i + 1;
-				}
-				while (l >= 0 && r < sblen) {
-					if (sb.charAt(l) != sb.charAt(r)) {
-						break;
-					} else {
-						m[l / 2][r / 2] = true;
-						l -= 2;
-						r += 2;
-					}
-				}
-			}
-			ArrayList<String> path = new ArrayList<String>();
-			partition(result, path, m, s, 0);
+		if (s == null) {
+			return result;
+		} else if (s.isEmpty()) {
+			ArrayList<String> partition = new ArrayList<String>();
+			partition.add(s);
+			result.add(partition);
+			return result;
 		}
+
+		boolean[][] dp = getPalindromes(s);
+		ArrayList<String> partition = new ArrayList<String>();
+		partitionDFS(result, partition, dp, s, 0);
+
 		return result;
 	}
 
-	private void partition(ArrayList<ArrayList<String>> result,
-			ArrayList<String> path, boolean[][] m, String s, int index) {
+	private boolean[][] getPalindromes(String s) {
 		int len = s.length();
-		if (index == len) {
-			ArrayList<String> newPath = new ArrayList<String>(path);
-			result.add(newPath);
+		boolean[][] dp = new boolean[len][len];
+
+		for (int row = len - 1; row >= 0; row--) {
+			for (int col = row; col < len; col++) {
+				if (row == col) {
+					dp[row][col] = true;
+				} else if (col - row == 1) {
+					dp[row][col] = s.charAt(row) == s.charAt(col);
+				} else {
+					dp[row][col] = s.charAt(row) == s.charAt(col)
+							&& dp[row + 1][col - 1];
+				}
+			}
+		}
+
+		return dp;
+	}
+
+	private void partitionDFS(ArrayList<ArrayList<String>> result,
+			ArrayList<String> partition, boolean[][] dp, String s, int row) {
+		if (row == dp.length) {
+			result.add(new ArrayList<String>(partition));
 			return;
 		}
-		for (int c = index; c < len; c++) {
-			if (m[index][c]) {
-				path.add(s.substring(index, c + 1));
-				partition(result, path, m, s, c + 1);
-				path.remove(path.size() - 1);
+
+		for (int col = row; col < dp.length; col++) {
+			if (dp[row][col]) {
+				partition.add(s.substring(row, col + 1));
+				partitionDFS(result, partition, dp, s, col + 1);
+				partition.remove(partition.size() - 1);
 			}
 		}
 	}
@@ -7002,21 +7031,23 @@ public class Solution {
 	}
 
 	public boolean wordBreakDP(String s, Set<String> dict) {
-		if (s == null || dict == null) {
+		if (s == null || s.isEmpty()) {
 			return false;
 		}
 
 		int len = s.length();
-		boolean[] m = new boolean[len + 1];
-		m[0] = true;
+		boolean[] dp = new boolean[len + 1];
+		dp[0] = true;
 		for (int i = 1; i <= len; i++) {
 			for (int j = 0; j < i; j++) {
-				if (m[j] && dict.contains(s.substring(j, i))) {
-					m[i] = true;
+				if (dp[j] && dict.contains(s.substring(j, i))) {
+					dp[i] = true;
+					break;
 				}
 			}
 		}
-		return m[len];
+
+		return dp[len];
 	}
 
 	/**
@@ -7389,50 +7420,33 @@ public class Solution {
 	 */
 
 	public int numDecodings(String s) {
-		if (s == null || s.isEmpty() || s.startsWith("0")) {
+		if (s == null || s.isEmpty() || s.charAt(0) == '0') {
 			return 0;
 		}
 
 		int len = s.length();
-		int index = 0;
-		int[] nums = new int[len];
-		for (int i = 0; i < len; i++) {
-			int curr = s.charAt(i) - '0';
-			if (curr != 0) {
-				nums[index++] = curr;
-			} else {
-				if (nums[index - 1] == 1 || nums[index - 1] == 2) {
-					nums[index - 1] *= 10;
-				} else {
+		int[] dp = new int[len + 1];
+		dp[0] = 1;
+		dp[1] = 1;
+		for (int i = 2; i <= len; i++) {
+			if (s.charAt(i - 1) == '0') {
+				if (s.charAt(i - 2) < '1' || s.charAt(i - 2) > '2') {
 					return 0;
+				} else {
+					dp[i] = dp[i - 2];
+				}
+			} else {
+				if (s.charAt(i - 2) == '0') {
+					dp[i] = dp[i - 2];
+				} else if ((s.charAt(i - 2) - '0') * 10 + s.charAt(i - 1) - '0' <= 26) {
+					dp[i] = dp[i - 1] + dp[i - 2];
+				} else {
+					dp[i] = dp[i - 1];
 				}
 			}
 		}
 
-		len = index;
-		if (len == 1) {
-			return 1;
-		}
-
-		int[] dp = new int[len];
-		dp[0] = 1;
-		if (nums[0] < 10 && nums[1] < 10 && nums[0] * 10 + nums[1] <= 26) {
-			dp[1] = 2;
-		} else {
-			dp[1] = 1;
-		}
-
-		for (int i = 2; i < len; i++) {
-			int curr = nums[i];
-			int last = nums[i - 1];
-			if (curr < 10 && last < 10 && last * 10 + curr <= 26) {
-				dp[i] = dp[i - 1] + dp[i - 2];
-			} else {
-				dp[i] = dp[i - 1];
-			}
-		}
-
-		return dp[len - 1];
+		return dp[len];
 	}
 
 	/**
