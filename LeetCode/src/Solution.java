@@ -5970,6 +5970,81 @@ public class Solution {
 	}
 
 	/**
+	 * $(Palindrome Partitioning II)
+	 * 
+	 * Given a string s, partition s such that every substring of the partition
+	 * is a palindrome.
+	 * 
+	 * Return the minimum cuts needed for a palindrome partitioning of s.
+	 * 
+	 * For example, given s = "aab", Return 1 since the palindrome partitioning
+	 * ["aa","b"] could be produced using 1 cut.
+	 */
+
+	/*
+	 * simple implementation
+	 */
+	public int minCut(String s) {
+		if (s == null || s.isEmpty()) {
+			return 0;
+		}
+
+		int len = s.length();
+		boolean[][] palindromeMap = getPalindromes(s);
+		int[] dp = new int[len + 1];
+		dp[0] = 0;
+		for (int i = 1; i <= len; i++) {
+			int minCut = Integer.MAX_VALUE;
+			for (int j = 0; j < i; j++) {
+				if (palindromeMap[j][i - 1]) {
+					if (j == 0) {
+						minCut = 0;
+						break;
+					} else {
+						minCut = Math.min(minCut, dp[j] + 1);
+					}
+				}
+			}
+			dp[i] = minCut;
+		}
+
+		return dp[len];
+	}
+
+	/*
+	 * merge two dp
+	 */
+	public int minCut2(String s) {
+		if (s == null || s.length() < 2) {
+			return 0;
+		}
+
+		int len = s.length();
+
+		boolean[][] m = new boolean[len][len];
+		int[] map = new int[len];
+		for (int i = 0; i < len; i++) {
+			map[i] = len - 1;
+		}
+		map[len - 1] = 0;
+		for (int row = len - 1; row >= 0; row--) {
+			for (int col = row; col < len; col++) {
+				if (s.charAt(row) == s.charAt(col)
+						&& (col - row < 2 || m[row + 1][col - 1])) {
+					m[row][col] = true;
+					if (col == len - 1) {
+						map[row] = 0;
+					} else {
+						map[row] = Math.min(map[row], 1 + map[col + 1]);
+					}
+				}
+			}
+		}
+
+		return map[0];
+	}
+
+	/**
 	 * $(Reverse Nodes in k-Group)
 	 * 
 	 * Given a linked list, reverse the nodes of a linked list k at a time and
@@ -7174,48 +7249,6 @@ public class Solution {
 	}
 
 	/**
-	 * $(Palindrome Partitioning II)
-	 * 
-	 * Given a string s, partition s such that every substring of the partition
-	 * is a palindrome.
-	 * 
-	 * Return the minimum cuts needed for a palindrome partitioning of s.
-	 * 
-	 * For example, given s = "aab", Return 1 since the palindrome partitioning
-	 * ["aa","b"] could be produced using 1 cut.
-	 */
-
-	public int minCut(String s) {
-		if (s == null || s.length() < 2) {
-			return 0;
-		}
-
-		int len = s.length();
-
-		boolean[][] m = new boolean[len][len];
-		int[] map = new int[len];
-		for (int i = 0; i < len; i++) {
-			map[i] = len - 1;
-		}
-		map[len - 1] = 0;
-		for (int row = len - 1; row >= 0; row--) {
-			for (int col = row; col < len; col++) {
-				if (s.charAt(row) == s.charAt(col)
-						&& (col - row < 2 || m[row + 1][col - 1])) {
-					m[row][col] = true;
-					if (col == len - 1) {
-						map[row] = 0;
-					} else {
-						map[row] = Math.min(map[row], 1 + map[col + 1]);
-					}
-				}
-			}
-		}
-
-		return map[0];
-	}
-
-	/**
 	 * $(Minimum Window Substring)
 	 * 
 	 * Given a string S and a string T, find the minimum window in S which will
@@ -7465,88 +7498,46 @@ public class Solution {
 
 	public ArrayList<String> wordBreak(String s, Set<String> dict) {
 		ArrayList<String> result = new ArrayList<String>();
-		if (s == null || dict == null || dict.isEmpty()) {
-			return result;
-		}
-		if (s.isEmpty()) {
-			if (dict.contains("")) {
-				result.add("");
-			}
+		if (s == null || s.isEmpty() || dict == null) {
 			return result;
 		}
 
-		HashMap<Character, ArrayList<String>> m = new HashMap<Character, ArrayList<String>>();
-		for (String str : dict) {
-			char ch = str.charAt(0);
-			ArrayList<String> arr = m.get(ch);
-			if (arr == null) {
-				arr = new ArrayList<String>();
-				m.put(ch, arr);
+		boolean flag = false;
+		for (String word : dict) {
+			if (s.endsWith(word)) {
+				flag = true;
+				break;
 			}
-			arr.add(str);
+		}
+		if (!flag) {
+			return result;
 		}
 
-		int len = s.length();
-		boolean[] dp = new boolean[len + 1];
-		dp[len] = true;
-		for (int i = len - 1; i >= 0; i--) {
-			for (int j = len; j > i; j--) {
-				if (dict.contains(s.substring(i, j)) && dp[j]) {
-					dp[i] = true;
-					break;
-				}
-			}
-		}
-
-		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
-		ArrayList<String> path = new ArrayList<String>();
-		wordBreakDFS(paths, path, s, m, dp, 0);
-		for (ArrayList<String> arr : paths) {
-			StringBuilder sb = new StringBuilder(arr.get(0));
-			for (int i = 1; i < arr.size(); i++) {
-				sb.append(" ");
-				sb.append(arr.get(i));
-			}
-			result.add(sb.toString());
-		}
+		wordBreakDFS(result, s, "", dict);
 
 		return result;
 	}
 
-	private void wordBreakDFS(ArrayList<ArrayList<String>> paths,
-			ArrayList<String> path, String s,
-			HashMap<Character, ArrayList<String>> m, boolean[] dp, int start) {
-		if (s.isEmpty()) {
-			ArrayList<String> newPath = new ArrayList<String>(path);
-			paths.add(newPath);
+	private void wordBreakDFS(ArrayList<String> result, String str,
+			String sofar, Set<String> dict) {
+		if (str.isEmpty()) {
+			result.add(sofar);
 			return;
 		}
 
-		ArrayList<String> arr = m.get(s.charAt(0));
-		if (arr != null) {
-			int size = arr.size();
-			for (int i = 0; i < size; i++) {
-				String word = arr.get(i);
-				if (s.startsWith(word) && dp[start + word.length()]) {
-					path.add(word);
-					wordBreakDFS(paths, path, s.substring(word.length()), m,
-							dp, start + word.length());
-					path.remove(path.size() - 1);
+		StringBuilder sb = new StringBuilder();
+		int len = str.length();
+		for (int i = 0; i < len; i++) {
+			sb.append(str.charAt(i));
+			if (dict.contains(sb.toString())) {
+				String space = "";
+				if (!sofar.isEmpty()) {
+					space = " ";
 				}
+				wordBreakDFS(result, str.substring(i + 1),
+						sofar + space + sb.toString(), dict);
 			}
 		}
-	}
-
-	@Test
-	public void testWordBreakII() {
-		String s = "catsanddog";
-		HashSet<String> set = new HashSet<String>();
-		String[] words = { "cat", "cats", "and", "sand", "dog" };
-		for (String word : words) {
-			set.add(word);
-		}
-		ArrayList<String> sentences = wordBreak(s, set);
-		System.out.println(sentences);
 	}
 
 	/**
