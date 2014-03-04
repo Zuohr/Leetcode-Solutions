@@ -1052,11 +1052,41 @@ public class Solution {
 	 * [1,2,1], and [2,1,1].
 	 */
 
+	/*
+	 * add num[i] to array only if i is not used and the previous duplicated
+	 * element is used.
+	 */
 	public ArrayList<ArrayList<Integer>> permuteUnique(int[] num) {
-		/*
-		 * solution same as $(Permutations) : permute(int[])
-		 */
-		return null;
+		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
+		if (num == null) {
+			return result;
+		}
+
+		Arrays.sort(num);
+		ArrayList<Integer> permutation = new ArrayList<Integer>();
+		boolean[] visited = new boolean[num.length];
+		permuteUniqueDFS(result, permutation, num, visited);
+
+		return result;
+	}
+
+	private void permuteUniqueDFS(ArrayList<ArrayList<Integer>> result,
+			ArrayList<Integer> permutation, int[] num, boolean[] visited) {
+		if (permutation.size() == num.length) {
+			result.add(new ArrayList<Integer>(permutation));
+			return;
+		}
+
+		for (int i = 0; i < num.length; i++) {
+			if (visited[i] || i > 0 && num[i] == num[i - 1] && !visited[i - 1]) {
+				continue;
+			}
+			visited[i] = true;
+			permutation.add(num[i]);
+			permuteUniqueDFS(result, permutation, num, visited);
+			permutation.remove(permutation.size() - 1);
+			visited[i] = false;
+		}
 	}
 
 	/**
@@ -2082,35 +2112,27 @@ public class Solution {
 
 	public ArrayList<ArrayList<Integer>> combine(int n, int k) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (n > 0 && k > 0 && n >= k) {
-			int[] sofar = new int[k];
-			combine(result, sofar, 0, 1, n);
+		if (n < 0 || k < 0 || n < k) {
+			return result;
 		}
+
+		ArrayList<Integer> combination = new ArrayList<Integer>();
+		combineDFS(result, 0, n, k, combination);
+
 		return result;
 	}
 
-	private void combine(ArrayList<ArrayList<Integer>> result, int[] sofar,
-			int index, int start, int n) {
-		if (index == sofar.length) {
-			ArrayList<Integer> newCombination = new ArrayList<Integer>();
-			for (int num : sofar) {
-				newCombination.add(num);
-			}
-			result.add(newCombination);
+	private void combineDFS(ArrayList<ArrayList<Integer>> result, int curr,
+			int n, int k, ArrayList<Integer> combination) {
+		if (combination.size() == k) {
+			result.add(new ArrayList<Integer>(combination));
 			return;
 		}
-		for (int i = start; i <= n; i++) {
-			sofar[index] = i;
-			combine(result, sofar, index + 1, i + 1, n);
-		}
-	}
 
-	@Test
-	public void testCombine() {
-		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		result = combine(2, 0);
-		for (ArrayList<Integer> arr : result) {
-			System.out.println(arr);
+		for (int i = curr; i <= n - k + combination.size(); i++) {
+			combination.add(i + 1);
+			combineDFS(result, i + 1, n, k, combination);
+			combination.remove(combination.size() - 1);
 		}
 	}
 
@@ -2167,41 +2189,28 @@ public class Solution {
 
 	public ArrayList<ArrayList<Integer>> subsets(int[] S) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (S != null) {
-			Arrays.sort(S);
-			boolean[] included = new boolean[S.length];
-			subsets(S, result, included, 0);
+		if (S == null) {
+			return result;
 		}
+
+		Arrays.sort(S);
+		ArrayList<Integer> combination = new ArrayList<Integer>();
+		subsetsDFS(result, combination, S, 0);
+
 		return result;
 	}
 
-	private void subsets(int[] arr, ArrayList<ArrayList<Integer>> result,
-			boolean[] included, int index) {
-		int len = included.length;
-		if (index == len) {
-			ArrayList<Integer> newArr = new ArrayList<Integer>();
-			for (int i = 0; i < len; i++) {
-				if (included[i]) {
-					newArr.add(arr[i]);
-				}
-			}
-			result.add(newArr);
+	private void subsetsDFS(ArrayList<ArrayList<Integer>> result,
+			ArrayList<Integer> combination, int[] S, int pos) {
+		if (pos == S.length) {
+			result.add(new ArrayList<Integer>(combination));
 			return;
 		}
 
-		included[index] = false;
-		subsets(arr, result, included, index + 1);
-		included[index] = true;
-		subsets(arr, result, included, index + 1);
-	}
-
-	@Test
-	public void testSubsets() {
-		int[] S = { 2, 3, 1, };
-		ArrayList<ArrayList<Integer>> result = subsets(S);
-		for (ArrayList<Integer> arr : result) {
-			System.out.println(arr);
-		}
+		combination.add(S[pos]);
+		subsetsDFS(result, combination, S, pos + 1);
+		combination.remove(combination.size() - 1);
+		subsetsDFS(result, combination, S, pos + 1);
 	}
 
 	/**
@@ -3454,50 +3463,35 @@ public class Solution {
 
 	public ArrayList<ArrayList<Integer>> subsetsWithDup(int[] num) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (num != null) {
-			Arrays.sort(num);
-			boolean[] mapping = new boolean[num.length];
-			getSubset(result, 0, num, mapping);
+		if (num == null) {
+			return result;
 		}
+
+		Arrays.sort(num);
+		boolean[] visited = new boolean[num.length];
+		ArrayList<Integer> combination = new ArrayList<Integer>();
+		subsetsWithDupDFS(result, combination, num, visited, 0);
 
 		return result;
 	}
 
-	private void getSubset(ArrayList<ArrayList<Integer>> result, int index,
-			int[] num, boolean[] mapping) {
-		int len = num.length;
-		if (index == len) {
-			ArrayList<Integer> arr = new ArrayList<Integer>();
-			for (int i = 0; i < len; i++) {
-				if (mapping[i]) {
-					arr.add(num[i]);
-				}
-			}
-			result.add(arr);
+	private void subsetsWithDupDFS(ArrayList<ArrayList<Integer>> result,
+			ArrayList<Integer> combination, int[] num, boolean[] visited,
+			int pos) {
+		if (pos == visited.length) {
+			result.add(new ArrayList<Integer>(combination));
 			return;
 		}
 
-		if (index < len - 1 && num[index] == num[index + 1]) {
-			int start = index, end;
-			for (end = start; end < len - 1; end++) {
-				if (num[end] != num[end + 1]) {
-					break;
-				}
-			}
-			for (int i = start; i <= end; i++) {
-				mapping[i] = false;
-			}
-			getSubset(result, end + 1, num, mapping);
-			for (int i = start; i <= end; i++) {
-				mapping[i] = true;
-				getSubset(result, end + 1, num, mapping);
-			}
-		} else {
-			mapping[index] = false;
-			getSubset(result, index + 1, num, mapping);
-			mapping[index] = true;
-			getSubset(result, index + 1, num, mapping);
+		if (!visited[pos]
+				&& (pos == 0 || num[pos] != num[pos - 1] || visited[pos - 1])) {
+			combination.add(num[pos]);
+			visited[pos] = true;
+			subsetsWithDupDFS(result, combination, num, visited, pos + 1);
+			visited[pos] = false;
+			combination.remove(combination.size() - 1);
 		}
+		subsetsWithDupDFS(result, combination, num, visited, pos + 1);
 	}
 
 	/**
@@ -5317,27 +5311,27 @@ public class Solution {
 
 	public ArrayList<String> letterCombinations(String digits) {
 		ArrayList<String> result = new ArrayList<String>();
-		if (digits != null && digits.length() > 0) {
-			String[] map = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
-					"wxyz" };
-			letterCombinations(result, map, digits, "");
-		} else {
-			result.add("");
+		if (digits == null || !digits.matches("\\d*")) {
+			return result;
 		}
+
+		String[] dict = { "", "", "abc", "def", "ghi", "jkl", "mno", "pqrs",
+				"tuv", "wxyz" };
+		letterCombinationsDFS(result, "", digits, dict);
+
 		return result;
 	}
 
-	private void letterCombinations(ArrayList<String> result, String[] map,
-			String digits, String sofar) {
-		int num = sofar.length();
-		if (num == digits.length()) {
+	private void letterCombinationsDFS(ArrayList<String> result, String sofar,
+			String digits, String[] dict) {
+		if (digits.isEmpty()) {
 			result.add(sofar);
 			return;
 		}
-		char[] letters = map[digits.charAt(num) - '2'].toCharArray();
-		for (int i = 0; i < letters.length; i++) {
-			letterCombinations(result, map, digits,
-					sofar + String.valueOf(letters[i]));
+
+		char[] candidates = dict[digits.charAt(0) - '0'].toCharArray();
+		for (char ch : candidates) {
+			letterCombinationsDFS(result, sofar + ch, digits.substring(1), dict);
 		}
 	}
 
