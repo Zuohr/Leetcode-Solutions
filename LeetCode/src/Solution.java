@@ -8141,7 +8141,7 @@ public class Solution {
 					end++;
 				}
 				for (; end >= 0; end--) {
-					if (isMatch(s.substring(end), p.substring(2))) {
+					if (isMatchRegExp(s.substring(end), p.substring(2))) {
 						return true;
 					}
 				}
@@ -8149,18 +8149,18 @@ public class Solution {
 			} else if (s.charAt(0) != p.charAt(0)) {
 				return false;
 			} else {
-				return isMatch(s.substring(1), p.substring(1));
+				return isMatchRegExp(s.substring(1), p.substring(1));
 			}
 		} else {
 			if (lenP > 1 && p.charAt(1) == '*') {
 				for (int i = lenS; i >= 0; i--) {
-					if (isMatch(s.substring(i), p.substring(2))) {
+					if (isMatchRegExp(s.substring(i), p.substring(2))) {
 						return true;
 					}
 				}
 				return false;
 			} else {
-				return isMatch(s.substring(1), p.substring(1));
+				return isMatchRegExp(s.substring(1), p.substring(1));
 			}
 		}
 	}
@@ -8184,46 +8184,57 @@ public class Solution {
 	 */
 
 	/*
-	 * recursive, TLE
+	 * DFS, TLE
 	 */
-	public boolean isMatchTLE(String s, String p) {
-		int lenS = s.length(), lenP = p.length();
-		if (lenP == 0) {
-			return lenS == 0;
+	public boolean isMatchDFS(String s, String p) {
+		if (s == null || p == null) {
+			return false;
 		}
 
-		if (lenS == 0) {
-			for (int i = 0; i < lenP; i++) {
+		if (s.isEmpty()) {
+			for (int i = 0; i < p.length(); i++) {
 				if (p.charAt(i) != '*') {
 					return false;
 				}
 			}
 			return true;
+		} else if (p.isEmpty()) {
+			return s.isEmpty();
 		}
 
-		if (p.charAt(lenP - 1) != '*' && p.charAt(lenP - 1) != '?'
-				&& p.charAt(lenP - 1) != s.charAt(lenS - 1)) {
+		char lastp = p.charAt(p.length() - 1);
+		if (lastp != '*' && lastp != '?' && lastp != s.charAt(s.length() - 1)) {
 			return false;
 		}
 
-		if (p.charAt(0) == '*') {
-			int endP = 0;
-			while (endP < lenP && p.charAt(endP) == '*') {
-				endP++;
+		if (p.charAt(0) == '?') {
+			return isMatchDFS(s.substring(1), p.substring(1));
+		} else if (p.charAt(0) == '*') {
+			int end = 0;
+			while (end < p.length() && p.charAt(end) == '*') {
+				end++;
 			}
-			for (int i = 0; i <= lenS; i++) {
-				if (isMatchTLE(s.substring(i), p.substring(endP))) {
+			for (int i = s.length(); i >= 0; i--) {
+				if (isMatchDFS(s.substring(i), p.substring(end))) {
 					return true;
 				}
 			}
 			return false;
 		} else {
-			return (p.charAt(0) == '?' || s.charAt(0) == p.charAt(0))
-					&& isMatchTLE(s.substring(1), p.substring(1));
+			if (s.charAt(0) == p.charAt(0)) {
+				return isMatchDFS(s.substring(1), p.substring(1));
+			} else {
+				return false;
+			}
 		}
 	}
 
-	public boolean isMatch(String s, String p) {
+	/*
+	 * DP, lots of optimizations needed: 1. remove consecutive * from p; 2.
+	 * check empty s and empty p at the start; 3. check if p has more non-*
+	 * characters than s;
+	 */
+	public boolean isMatchDP(String s, String p) {
 		int lenS = s.length(), lenP = p.length();
 		if (lenP == 0) {
 			return lenS == 0;
@@ -8305,6 +8316,42 @@ public class Solution {
 		}
 
 		return dp[(lenP - 1) & 1][lenS];
+	}
+
+	/*
+	 * O(n^2) time, O(1) space, optimal
+	 */
+	public boolean isMatch(String s, String p) {
+		if (s == null || p == null) {
+			return false;
+		}
+
+		int lens = s.length(), lenp = p.length();
+		int ps = 0, pp = 0, star = -1, sstar = ps;
+		while (ps < lens) {
+			if (pp != lenp
+					&& (p.charAt(pp) == '?' || s.charAt(ps) == p.charAt(pp))) {
+				ps++;
+				pp++;
+			} else if (pp != lenp && p.charAt(pp) == '*') {
+				star = pp;
+				pp++;
+				sstar = ps;
+			} else {
+				if (star != -1) {
+					pp = star + 1;
+					sstar++;
+					ps = sstar;
+				} else {
+					return false;
+				}
+			}
+		}
+
+		while (pp < lenp && p.charAt(pp) == '*') {
+			pp++;
+		}
+		return pp == lenp;
 	}
 
 	/**
