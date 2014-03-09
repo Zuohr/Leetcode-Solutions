@@ -2542,53 +2542,45 @@ public class Solution {
 
 	public ArrayList<String> restoreIpAddresses(String s) {
 		ArrayList<String> result = new ArrayList<String>();
-		if (s == null || s.length() > 12 || s.length() < 4
-				|| (s.charAt(0) - '0' > 2 && s.length() == 12)) {
+		if (s == null || !s.matches("\\d{4,12}")) {
 			return result;
 		}
-		restoreIpAddresses(result, "", s, 4);
+
+		ArrayList<String> combination = new ArrayList<String>();
+		restoreIpAddressesDFS(result, combination, s, 3);
+
 		return result;
 	}
 
-	private void restoreIpAddresses(ArrayList<String> result, String sofar,
-			String rest, int segment) {
-		if ("".equals(rest) && segment == 0) {
-			result.add(sofar);
+	private void restoreIpAddressesDFS(ArrayList<String> result,
+			ArrayList<String> combination, String s, int seg) {
+		if (seg == 0) {
+			if (!s.isEmpty() && Integer.parseInt(s) <= 255
+					&& (s.charAt(0) != '0' || s.length() == 1)) {
+				String ip = "";
+				for (int i = 0; i < combination.size(); i++) {
+					ip += combination.get(i) + ".";
+				}
+				ip += s;
+				result.add(ip);
+			}
 			return;
-		} else if ((double) rest.length() / segment <= 3) {
-			String sep;
-			if ("".equals(sofar)) {
-				sep = "";
-			} else {
-				sep = ".";
-			}
-			if (rest.length() >= 1) {
-				restoreIpAddresses(result, sofar + sep + rest.substring(0, 1),
-						rest.substring(1), segment - 1);
-			}
-			if (rest.length() >= 2) {
-				String newSeg = rest.substring(0, 2);
-				if (newSeg.charAt(0) != '0') {
-					restoreIpAddresses(result, sofar + sep + newSeg,
-							rest.substring(2), segment - 1);
-				}
-			}
-			if (rest.length() >= 3) {
-				String newSeg = rest.substring(0, 3);
-				if (newSeg.charAt(0) != '0' && Integer.parseInt(newSeg) <= 255) {
-					restoreIpAddresses(result, sofar + sep + newSeg,
-							rest.substring(3), segment - 1);
-				}
-			}
 		}
-	}
 
-	@Test
-	public void testRestoreIpAddress() {
-		String s = "010010";
-		ArrayList<String> result = restoreIpAddresses(s);
-		for (String str : result) {
-			System.out.println(str);
+		int maxDigit = 1;
+		if (s.charAt(0) != '0') {
+			maxDigit = Math.min(3, s.length());
+		}
+		String sofar = "";
+		for (int i = 0; i < maxDigit; i++) {
+			sofar += s.charAt(i);
+			int remain = (s.length() - i - 1) / seg;
+			if (Integer.parseInt(sofar) <= 255 && remain <= 3 && remain >= 1) {
+				combination.add(sofar);
+				restoreIpAddressesDFS(result, combination, s.substring(i + 1),
+						seg - 1);
+				combination.remove(combination.size() - 1);
+			}
 		}
 	}
 
@@ -5420,42 +5412,39 @@ public class Solution {
 	public ArrayList<ArrayList<Integer>> combinationSum(int[] candidates,
 			int target) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (candidates != null && candidates.length > 0) {
-			Arrays.sort(candidates);
-			int[] map = new int[candidates.length];
-			combinationSum(result, candidates, map, target,
-					candidates.length - 1);
+		if (candidates == null) {
+			return result;
 		}
+
+		Arrays.sort(candidates);
+		int[] occurrence = new int[candidates.length];
+		combinationSumDFS(result, candidates, occurrence, target, 0);
+
 		return result;
 	}
 
-	private void combinationSum(ArrayList<ArrayList<Integer>> result,
-			int[] arr, int[] map, int target, int index) {
-		int len = arr.length;
-		if (index < 0) {
+	private void combinationSumDFS(ArrayList<ArrayList<Integer>> result,
+			int[] candidates, int[] occurence, int target, int index) {
+		if (index == candidates.length) {
 			if (target == 0) {
-				ArrayList<Integer> comb = new ArrayList<Integer>();
-				for (int i = 0; i < len; i++) {
-					for (int j = 0; j < map[i]; j++) {
-						comb.add(arr[i]);
+				ArrayList<Integer> combination = new ArrayList<Integer>();
+				for (int i = 0; i < occurence.length; i++) {
+					int cnt = occurence[i];
+					int num = candidates[i];
+					for (int j = 0; j < cnt; j++) {
+						combination.add(num);
 					}
 				}
-				result.add(comb);
+				result.add(combination);
 			}
 			return;
 		}
 
-		if (arr[index] == 0) {
-			combinationSum(result, arr, map, target, index + 1);
-		} else {
-			int upper = target / arr[index];
-			for (int i = 0; i <= upper; i++) {
-				int temp = map[index];
-				map[index] = i;
-				combinationSum(result, arr, map, target - i * arr[index],
-						index - 1);
-				map[index] = temp;
-			}
+		int maxrep = target / candidates[index];
+		for (int i = 0; i <= maxrep; i++) {
+			occurence[index] = i;
+			combinationSumDFS(result, candidates, occurence, target - i
+					* candidates[index], index + 1);
 		}
 	}
 
@@ -5476,67 +5465,39 @@ public class Solution {
 
 	public ArrayList<ArrayList<Integer>> combinationSum2(int[] num, int target) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (num != null && num.length > 0) {
-			Arrays.sort(num);
-			boolean[] map = new boolean[num.length];
-			combinationSum2(result, num, map, target, num.length - 1);
+		if (num == null) {
+			return result;
 		}
+
+		Arrays.sort(num);
+		ArrayList<Integer> combination = new ArrayList<Integer>();
+		boolean[] visited = new boolean[num.length];
+		combinationSum2DFS(result, combination, num, target, 0, visited);
+
 		return result;
 	}
 
-	private void combinationSum2(ArrayList<ArrayList<Integer>> result,
-			int[] num, boolean[] map, int target, int index) {
-		int len = num.length;
-		if (index < 0) {
-			ArrayList<Integer> comb = new ArrayList<Integer>();
+	private void combinationSum2DFS(ArrayList<ArrayList<Integer>> result,
+			ArrayList<Integer> combination, int[] num, int target, int index,
+			boolean[] visited) {
+		if (index == num.length) {
 			if (target == 0) {
-				for (int i = 0; i < len; i++) {
-					if (map[i]) {
-						comb.add(num[i]);
-					}
-				}
-				result.add(comb);
+				result.add(new ArrayList<Integer>(combination));
 			}
 			return;
 		}
 
-		if (index > 0 && num[index] == num[index - 1]) {
-			int end = index, count = 1;
-			while (end > 0 && num[end] == num[end - 1]) {
-				end--;
-				count++;
-			}
-			combinationSum2(result, num, map, target, end - 1);
-			for (int j = 1; j <= count; j++) {
-				if (j * num[index] <= target) {
-					map[index - j + 1] = true;
-					combinationSum2(result, num, map, target - j * num[index],
-							end - 1);
-				} else {
-					break;
-				}
-			}
-			for (int i = 0; i < count; i++) {
-				map[index - i] = false;
-			}
-		} else {
-			if (num[index] <= target) {
-				map[index] = true;
-				combinationSum2(result, num, map, target - num[index],
-						index - 1);
-				map[index] = false;
-			}
-			combinationSum2(result, num, map, target, index - 1);
+		if (!visited[index]
+				&& (index == 0 || num[index] != num[index - 1] || visited[index - 1])
+				&& target - num[index] >= 0) {
+			visited[index] = true;
+			combination.add(num[index]);
+			combinationSum2DFS(result, combination, num, target - num[index],
+					index + 1, visited);
+			combination.remove(combination.size() - 1);
+			visited[index] = false;
 		}
-	}
-
-	@Test
-	public void testCombinationSum2() {
-		int[] num = { 3, 1, 3, 5, 1, 1 };
-		ArrayList<ArrayList<Integer>> result = combinationSum2(num, 8);
-		for (ArrayList<Integer> arr : result) {
-			System.out.println(arr);
-		}
+		combinationSum2DFS(result, combination, num, target, index + 1, visited);
 	}
 
 	/**
@@ -6720,60 +6681,53 @@ public class Solution {
 
 	public boolean exist(char[][] board, String word) {
 		if (board == null || board.length == 0 || board[0] == null
-				|| board[0].length == 0 || word == null || word.length() == 0) {
+				|| board[0].length == 0 || word == null) {
 			return false;
 		}
-		int h = board.length, w = board[0].length;
-		int[] m1 = new int[256], m2 = new int[256];
-		for (int r = 0; r < h; r++) {
-			for (int c = 0; c < w; c++) {
-				m1[board[r][c]]++;
-			}
-		}
-		for (int i = 0; i < word.length(); i++) {
-			m2[word.charAt(i)]++;
-		}
-		for (int i = 0; i < m1.length; i++) {
-			if (m2[i] > m1[i]) {
-				return false;
-			}
-		}
-		for (int r = 0; r < h; r++) {
-			for (int c = 0; c < w; c++) {
-				if (board[r][c] == word.charAt(0)) {
-					boolean[][] v = new boolean[h][w];
-					v[r][c] = true;
-					if (exist(board, v, word.substring(1), r, c)) {
+
+		int ht = board.length, wd = board[0].length;
+		boolean[][] visited = new boolean[ht][wd];
+		for (int row = 0; row < ht; row++) {
+			for (int col = 0; col < wd; col++) {
+				if (board[row][col] == word.charAt(0)) {
+					board[row][col] = ' ';
+					if (existDFS(board, visited, word.substring(1), row, col)) {
 						return true;
 					}
+					board[row][col] = word.charAt(0);
 				}
 			}
 		}
+
 		return false;
 	}
 
-	private boolean exist(char[][] board, boolean[][] v, String word, int r,
-			int c) {
+	private boolean existDFS(char[][] board, boolean[][] visited, String word,
+			int row, int col) {
 		if (word.isEmpty()) {
 			return true;
 		}
-		int h = board.length, w = board[0].length;
-		int[][] directions = { { -1, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 } };
-		int row = 0, col = 0;
+
+		int[][] directions = { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
 		for (int i = 0; i < directions.length; i++) {
-			row = r + directions[i][0];
-			col = c + directions[i][1];
-			if (row >= 0 && row < h && col < w && col >= 0 && !v[row][col]
-					&& board[row][col] == word.charAt(0)) {
-				v[row][col] = true;
-				if (exist(board, v, word.substring(1), row, col)) {
+			int newRow = row + directions[i][0], newCol = col
+					+ directions[i][1];
+			if (isInBoard(newRow, newCol, board)
+					&& board[newRow][newCol] == word.charAt(0)) {
+				board[newRow][newCol] = ' ';
+				if (existDFS(board, visited, word.substring(1), newRow, newCol)) {
 					return true;
-				} else {
-					v[row][col] = false;
 				}
+				board[newRow][newCol] = word.charAt(0);
 			}
 		}
+
 		return false;
+	}
+
+	private boolean isInBoard(int row, int col, char[][] board) {
+		return row >= 0 && row < board.length && col >= 0
+				&& col < board[0].length;
 	}
 
 	/**
@@ -7388,47 +7342,44 @@ public class Solution {
 
 	public ArrayList<Integer> findSubstring(String S, String[] L) {
 		ArrayList<Integer> result = new ArrayList<Integer>();
-		if (S == null || S.isEmpty() || L == null || L.length == 0) {
+		if (S == null || S.isEmpty() || L == null || L.length == 0
+				|| S.length() < L.length * L[0].length()) {
 			return result;
 		}
 
-		int lenL = L.length, lenS = S.length(), lenW = L[0].length(), size = lenL
-				* lenW;
-
-		HashMap<String, Integer> m = new HashMap<String, Integer>();
-		for (int i = 0; i < lenL; i++) {
-			String word = L[i];
-			Integer cnt = m.get(word);
+		HashMap<String, Integer> map = new HashMap<String, Integer>();
+		for (String word : L) {
+			Integer cnt = map.get(word);
 			if (cnt == null) {
-				m.put(word, 1);
+				map.put(word, 1);
 			} else {
-				m.put(word, cnt + 1);
+				map.put(word, cnt + 1);
 			}
 		}
 
-		for (int i = 0; i <= lenS - size; i++) {
-			int head = i, tail = head;
-			if (m.containsKey(S.substring(head, head + lenW))) {
-				HashMap<String, Integer> map = new HashMap<String, Integer>(m);
-				while (!map.isEmpty()) {
-					String word = S.substring(tail, tail + lenW);
-					Integer cnt = map.get(word);
-					if (cnt == null) {
-						break;
-					} else if (cnt == 1) {
-						map.remove(word);
-					} else {
-						map.put(word, cnt - 1);
-					}
-					tail += lenW;
-				}
-				if (map.isEmpty()) {
-					result.add(head);
-				}
+		int wlen = L[0].length(), len = L.length * wlen;
+		for (int i = 0; i <= S.length() - len; i++) {
+			if (isConcatination(S.substring(i, i + len),
+					new HashMap<String, Integer>(map), wlen)) {
+				result.add(i);
 			}
 		}
 
 		return result;
+	}
+
+	private boolean isConcatination(String S, HashMap<String, Integer> map,
+			int wlen) {
+		for (int i = 0; i < S.length(); i += wlen) {
+			String word = S.substring(i, i + wlen);
+			Integer cnt = map.get(word);
+			if (cnt == null || cnt <= 0) {
+				return false;
+			} else {
+				map.put(word, cnt - 1);
+			}
+		}
+		return true;
 	}
 
 	/**
