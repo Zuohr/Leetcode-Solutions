@@ -5584,59 +5584,39 @@ public class Solution {
 	 * s1 and s2 of the same length, determine if s2 is a scrambled string of
 	 * s1.
 	 */
+
 	public boolean isScramble(String s1, String s2) {
-		if (s1 == null && s2 != null || s1 != null && s2 == null || s1 == null
-				&& s2 == null) {
+		if (s1 == null || s2 == null || s1.length() != s2.length()) {
 			return false;
-		} else if (s1.length() != s2.length()) {
-			return false;
-		} else {
-			return isScrambleDFS(s1, s2);
-		}
-	}
-
-	private boolean isScrambleDFS(String s1, String s2) {
-		if (s1.length() <= 3) {
-			char[] arr1 = s1.toCharArray();
-			char[] arr2 = s2.toCharArray();
-			Arrays.sort(arr1);
-			Arrays.sort(arr2);
-			for (int i = 0; i < arr1.length; i++) {
-				if (arr1[i] != arr2[i]) {
-					return false;
-				}
-			}
-			return true;
 		}
 
-		int[] m1 = new int[26];
-		int[] m2 = new int[26];
-		for (int i = 0; i < s1.length(); i++) {
-			m1[s1.charAt(i) - 'a']++;
-			m2[s2.charAt(i) - 'a']++;
+		int len = s1.length();
+		char[] map1 = new char[256], map2 = new char[256];
+		for (int i = 0; i < len; i++) {
+			map1[s1.charAt(i)]++;
+			map2[s2.charAt(i)]++;
 		}
-		for (int i = 0; i < 26; i++) {
-			if (m1[i] != m2[i]) {
+		for (int i = 0; i < 256; i++) {
+			if (map1[i] != map2[i]) {
 				return false;
 			}
 		}
+		if (len <= 3) {
+			return true;
+		}
 
-		for (int i = 1; i < s1.length(); i++) {
-			if (isScrambleDFS(s1.substring(0, i), s2.substring(0, i))
-					&& isScrambleDFS(s1.substring(i), s2.substring(i))
-					|| isScrambleDFS(s1.substring(0, i),
-							s2.substring(s2.length() - i))
-					&& isScrambleDFS(s1.substring(i),
-							s2.substring(0, s2.length() - i))) {
+		for (int i = 1; i < len; i++) {
+			if (isScramble(s1.substring(0, i), s2.substring(0, i))
+					&& isScramble(s1.substring(i, len), s2.substring(i, len))
+					|| isScramble(s1.substring(0, i),
+							s2.substring(len - i, len))
+					&& isScramble(s1.substring(i, len),
+							s2.substring(0, len - i))) {
 				return true;
 			}
 		}
-		return false;
-	}
 
-	@Test
-	public void TestIsScramble() {
-		System.out.println(isScramble("", ""));
+		return false;
 	}
 
 	/**
@@ -6361,6 +6341,47 @@ public class Solution {
 			neighbors = new ArrayList<UndirectedGraphNode>();
 		}
 	};
+
+	public UndirectedGraphNode cloneGraph(UndirectedGraphNode node) {
+		if (node == null) {
+			return null;
+		}
+	
+		HashMap<Integer, UndirectedGraphNode> map = new HashMap<Integer, UndirectedGraphNode>();
+		map.put(node.label, node);
+		DFSgraph(node, map);
+	
+		HashMap<Integer, UndirectedGraphNode> newMap = new HashMap<Integer, UndirectedGraphNode>();
+		for (Integer label : map.keySet()) {
+			UndirectedGraphNode oriNode = map.get(label);
+			UndirectedGraphNode newNode = newMap.get(label);
+			if (newNode == null) {
+				newNode = new UndirectedGraphNode(label);
+				newMap.put(label, newNode);
+			}
+			ArrayList<UndirectedGraphNode> newNgb = newNode.neighbors;
+			for (UndirectedGraphNode neighbor : oriNode.neighbors) {
+				UndirectedGraphNode ngb = newMap.get(neighbor.label);
+				if (ngb == null) {
+					ngb = new UndirectedGraphNode(neighbor.label);
+					newMap.put(ngb.label, ngb);
+				}
+				newNgb.add(ngb);
+			}
+		}
+	
+		return newMap.get(node.label);
+	}
+
+	private void DFSgraph(UndirectedGraphNode node,
+			HashMap<Integer, UndirectedGraphNode> map) {
+		for (UndirectedGraphNode ngb : node.neighbors) {
+			if (!map.containsKey(ngb.label)) {
+				map.put(ngb.label, ngb);
+				DFSgraph(ngb, map);
+			}
+		}
+	}
 
 	private void printUndirectedGraphNode(UndirectedGraphNode node) {
 		System.out.printf("(%d)->[", node.label);
@@ -8923,5 +8944,75 @@ public class Solution {
 						 */new Point(0, 0), new Point(0, 0), new Point(0, 0),
 				new Point(0, 0) };
 		System.out.println(maxPoints(ps));
+	}
+
+	/**
+	 * $(Reverse Words in a String)
+	 * 
+	 * Given an input string, reverse the string word by word.
+	 * 
+	 * For example, Given s = "the sky is blue", return "blue is sky the".
+	 * 
+	 * Clarification: What constitutes a word? A sequence of non-space
+	 * characters constitutes a word. Could the input string contain leading or
+	 * trailing spaces? Yes. However, your reversed string should not contain
+	 * leading or trailing spaces. How about multiple spaces between two words?
+	 * Reduce them to a single space in the reversed string.
+	 */
+
+	public String reverseWords(String s) {
+		if (s == null || s.isEmpty()) {
+			return s;
+		}
+
+		char[] chs = s.toCharArray();
+		int left = 0, right = chs.length - 1;
+		while (left < chs.length && chs[left] == ' ') {
+			left++;
+		}
+		while (right >= left && chs[right] == ' ') {
+			right--;
+		}
+
+		if (right <= left) {
+			return s.substring(left, right + 1);
+		}
+
+		int bp = 0, fp = left;
+		boolean flag = true;
+		for (; fp <= right; fp++) {
+			if (chs[fp] != ' ') {
+				chs[bp++] = chs[fp];
+				flag = true;
+			} else {
+				if (flag) {
+					chs[bp++] = chs[fp];
+					flag = false;
+				}
+			}
+		}
+
+		int start = 0, end = 0;
+		while (start < bp) {
+			while (end < bp && chs[end] != ' ') {
+				end++;
+			}
+			reverseString(chs, start, end - 1);
+			start = end + 1;
+			end = start;
+		}
+
+		reverseString(chs, 0, bp - 1);
+		return new String(chs, 0, bp);
+	}
+
+	private void reverseString(char[] chs, int start, int end) {
+		while (start < end) {
+			chs[start] ^= chs[end];
+			chs[end] ^= chs[start];
+			chs[start] ^= chs[end];
+			start++;
+			end--;
+		}
 	}
 }
