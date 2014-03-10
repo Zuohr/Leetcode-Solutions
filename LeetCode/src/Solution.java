@@ -3632,68 +3632,29 @@ public class Solution {
 	 */
 
 	public boolean isValidSudoku(char[][] board) {
-		int len = board.length;
-		int[][] rows = new int[len][len];
-		int[][] cols = new int[len][len];
-		int[][] grids = new int[len][len];
-		for (int r = 0; r < len; r++) {
-			for (int c = 0; c < len; c++) {
-				if (board[r][c] != '.') {
-					int num = board[r][c] - '0' - 1;
-					rows[r][num]++;
-					cols[c][num]++;
-					grids[r / 3 * 3 + c / 3][num]++;
+		if (board == null || board[0] == null || board.length != 9
+				|| board[0].length != 9) {
+			return false;
+		}
+
+		boolean[][] rowMap = new boolean[9][9], colMap = new boolean[9][9], gridMap = new boolean[9][9];
+		for (int row = 0; row < 9; row++) {
+			for (int col = 0; col < 9; col++) {
+				if (board[row][col] != '.') {
+					int num = board[row][col] - '0' - 1;
+					if (rowMap[row][num] || colMap[col][num]
+							|| gridMap[row / 3 * 3 + col / 3][num]) {
+						return false;
+					} else {
+						rowMap[row][num] = true;
+						colMap[col][num] = true;
+						gridMap[row / 3 * 3 + col / 3][num] = true;
+					}
 				}
 			}
 		}
-		for (int r = 0; r < len; r++) {
-			for (int c = 0; c < len; c++) {
-				if (rows[r][c] > 1 || cols[r][c] > 1 || grids[r][c] > 1) {
-					return false;
-				}
-			}
-		}
+
 		return true;
-	}
-
-	public boolean isValidSudoku2(char[][] board) {
-		int len = board.length;
-		int[][] rows = new int[len][2];
-		int[][] cols = new int[len][2];
-		int[][] grids = new int[len][2];
-		for (int r = 0; r < len; r++) {
-			for (int c = 0; c < len; c++) {
-				if (board[r][c] != '.') {
-					int mask = 1 << board[r][c] - '0' - 1;
-					rows[r][0] |= mask;
-					cols[c][0] |= mask;
-					grids[r / 3 * 3 + c / 3][0] |= mask;
-					rows[r][1]++;
-					cols[c][1]++;
-					grids[r / 3 * 3 + c / 3][1]++;
-				}
-			}
-		}
-		for (int r = 0; r < len; r++) {
-			if (count1s(rows[r][0]) != rows[r][1]
-					|| count1s(cols[r][0]) != cols[r][1]
-					|| count1s(grids[r][0]) != grids[r][1]) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private int count1s(int num) {
-		int count = 0;
-		for (int mask = 1; num != 0; mask <<= 1) {
-			if ((num & mask) != 0) {
-				count++;
-				num &= ~mask;
-			}
-		}
-
-		return count;
 	}
 
 	/**
