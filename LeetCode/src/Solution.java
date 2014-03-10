@@ -4204,7 +4204,47 @@ public class Solution {
 	 * ["..Q.", "Q...", "...Q", ".Q.."] ]
 	 */
 
+	/*
+	 * simple implementation, recommended
+	 */
 	public ArrayList<String[]> solveNQueens(int n) {
+		ArrayList<String[]> result = new ArrayList<String[]>();
+		if (n <= 0) {
+			return result;
+		}
+
+		int[] rows = new int[n];
+		solveNQueensDFS(result, rows, 0);
+
+		return result;
+	}
+
+	private void solveNQueensDFS(ArrayList<String[]> result, int[] rows,
+			int currRow) {
+		if (currRow == rows.length) {
+			String[] board = new String[rows.length];
+			for (int r = 0; r < board.length; r++) {
+				char[] chs = new char[rows.length];
+				Arrays.fill(chs, '.');
+				chs[rows[r]] = 'Q';
+				board[r] = new String(chs);
+			}
+			result.add(board);
+			return;
+		}
+
+		for (int c = 0; c < rows.length; c++) {
+			if (canPut(rows, currRow, c)) {
+				rows[currRow] = c;
+				solveNQueensDFS(result, rows, currRow + 1);
+			}
+		}
+	}
+
+	/*
+	 * use bitmap to store queen position
+	 */
+	public ArrayList<String[]> solveNQueensBitMap(int n) {
 		ArrayList<String[]> result = new ArrayList<String[]>();
 		if (n == 1 || n > 3) {
 			boolean[][] board = new boolean[n][n];
@@ -4274,7 +4314,7 @@ public class Solution {
 		return result[0];
 	}
 
-	public void totalNQueens(int[] result, int[] rows, int row) {
+	private void totalNQueens(int[] result, int[] rows, int row) {
 		int n = rows.length;
 		if (row == n) {
 			result[0]++;
@@ -4290,9 +4330,10 @@ public class Solution {
 		}
 	}
 
-	public boolean canPut(int[] rows, int row, int col) {
-		for (int i = 0; i < row; i++) {
-			if (rows[i] == col || Math.abs(col - rows[i]) == row - i) {
+	private boolean canPut(int[] rows, int currRow, int currCol) {
+		for (int r = 0; r < currRow; r++) {
+			if (rows[r] == currCol
+					|| currRow - r == Math.abs(currCol - rows[r])) {
 				return false;
 			}
 		}
@@ -6346,11 +6387,11 @@ public class Solution {
 		if (node == null) {
 			return null;
 		}
-	
+
 		HashMap<Integer, UndirectedGraphNode> map = new HashMap<Integer, UndirectedGraphNode>();
 		map.put(node.label, node);
 		DFSgraph(node, map);
-	
+
 		HashMap<Integer, UndirectedGraphNode> newMap = new HashMap<Integer, UndirectedGraphNode>();
 		for (Integer label : map.keySet()) {
 			UndirectedGraphNode oriNode = map.get(label);
@@ -6369,7 +6410,7 @@ public class Solution {
 				newNgb.add(ngb);
 			}
 		}
-	
+
 		return newMap.get(node.label);
 	}
 
