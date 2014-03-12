@@ -1,10 +1,3 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,13 +5,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.junit.Test;
 
@@ -576,161 +568,72 @@ public class Solution {
 	 */
 
 	public void solve(char[][] board) {
-		if (board == null || board.length < 3 || board[0].length < 3) {
+		if (board == null || board.length == 0 || board[0] == null
+				|| board[0].length == 0) {
 			return;
 		}
 
-		int h = board.length;
-		int w = board[0].length;
-		boolean[][] forbid = new boolean[h][w];
-		for (int i = 0; i < w; i++) {
-			forbid[0][i] = true;
-			forbid[h - 1][i] = true;
+		int ht = board.length, wd = board[0].length;
+		for (int col = 0; col < wd; col++) {
+			if (board[0][col] == 'O') {
+				flipBFS(board, 0, col);
+			}
+			if (board[ht - 1][col] == 'O') {
+				flipBFS(board, ht - 1, col);
+			}
 		}
-		for (int i = 0; i < h; i++) {
-			forbid[i][0] = true;
-			forbid[i][w - 1] = true;
+		for (int row = 0; row < ht; row++) {
+			if (board[row][0] == 'O') {
+				flipBFS(board, row, 0);
+			}
+			if (board[row][wd - 1] == 'O') {
+				flipBFS(board, row, wd - 1);
+			}
 		}
-		for (int r = 1; r < h - 1; r++) {
-			for (int c = 1; c < w - 1; c++) {
-				if (board[r][c] == 'O' && !forbid[r][c]) {
-					boolean[][] m = new boolean[h][w];
-					if (mark(board, m, forbid, r, c)) {
-						for (int mr = 1; mr < h - 1; mr++) {
-							for (int mc = 1; mc < w - 1; mc++) {
-								if (m[mr][mc]) {
-									board[mr][mc] = 'X';
-								}
-							}
-						}
-					} else {
-						for (int mr = 1; mr < h - 1; mr++) {
-							for (int mc = 1; mc < w - 1; mc++) {
-								if (m[mr][mc]) {
-									forbid[mr][mc] = true;
-								}
-							}
-						}
-					}
+
+		for (int row = 1; row < ht - 1; row++) {
+			for (int col = 1; col < wd - 1; col++) {
+				if (board[row][col] == 'O') {
+					board[row][col] = 'X';
 				}
 			}
 		}
 
-	}
-
-	private boolean mark(char[][] board, boolean[][] m, boolean[][] forbid,
-			int r, int c) {
-		Queue<Integer> visited = new LinkedList<Integer>();
-		int width = board[0].length;
-		int num = r * width + c;
-		visited.add(num);
-		m[r][c] = true;
-		boolean flag = true;
-
-		int row, col;
-		while (!visited.isEmpty()) {
-			num = visited.remove();
-			row = num / width;
-			col = num % width;
-			int up = row - 1, down = row + 1, right = col + 1, left = col - 1;
-			if (board[up][col] == 'O' && !m[up][col]) {
-				if (forbid[up][col]) {
-					flag = false;
-				} else {
-					m[up][col] = true;
-					visited.add(up * width + col);
+		for (int row = 0; row < ht; row++) {
+			for (int col = 0; col < wd; col++) {
+				if (board[row][col] == 'N') {
+					board[row][col] = 'O';
 				}
 			}
-			if (board[row][left] == 'O' && !m[row][left]) {
-				if (forbid[row][left]) {
-					flag = false;
-				} else {
-					m[row][left] = true;
-					visited.add(row * width + left);
-				}
-			}
-			if (board[down][col] == 'O' && !m[down][col]) {
-				if (forbid[down][col]) {
-					flag = false;
-				} else {
-					m[down][col] = true;
-					visited.add(down * width + col);
-				}
-			}
-			if (board[row][right] == 'O' && !m[row][right]) {
-				if (forbid[row][right]) {
-					flag = false;
-				} else {
-					m[row][right] = true;
-					visited.add(row * width + right);
-				}
-			}
-
-		}
-
-		return flag;
-	}
-
-	@Test
-	public void testSolve() {
-
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File(
-					"input2.in")));
-			PrintWriter writer = new PrintWriter(new FileWriter(new File(
-					"output2.txt")));
-			char[][] board = new char[250][250];
-			// char[][] board = new char[200][200];
-			Pattern p = Pattern.compile("\"([OX]+)\"");
-			String line = reader.readLine();
-			Matcher m = p.matcher(line);
-			int row = 0;
-			while (m.find()) {
-				String str = m.group(1);
-				for (int i = 0; i < str.length(); i++) {
-					board[row][i] = str.charAt(i);
-				}
-				row++;
-				// System.out.println(str);
-				writer.println(str);
-			}
-
-			reader.close();
-
-			writer.println();
-
-			solve(board);
-			for (int i = 0; i < board.length; i++) {
-				for (int j = 0; j < board[0].length; j++) {
-					// System.out.print(board[i][j] + " ");
-					writer.print(board[i][j] + " ");
-				}
-				// System.out.println();
-				writer.println();
-			}
-			writer.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
-	@Test
-	public void testSolve2() {
-		char[][] board = new char[][] { { 'X', 'X', 'X', 'X', 'X', 'X', 'X' },
-				{ 'X', 'O', 'X', 'O', 'O', 'O', 'X' },
-				{ 'X', 'O', 'X', 'O', 'X', 'O', 'X' },
-				{ 'X', 'O', 'X', 'O', 'X', 'O', 'X' },
-				{ 'X', 'O', 'X', 'X', 'X', 'O', 'X' },
-				{ 'X', 'O', 'O', 'O', 'O', 'O', 'X' },
-				{ 'X', 'X', 'X', 'O', 'X', 'X', 'X' }, };
-		solve(board);
-		for (int i = 0; i < board.length; i++) {
-			for (int j = 0; j < board[0].length; j++) {
-				System.out.print(board[i][j] + " ");
+	private void flipBFS(char[][] board, int row, int col) {
+		Set<Integer> vst = new HashSet<Integer>();
+		Queue<Integer> q = new LinkedList<Integer>();
+		int ht = board.length, wd = board[0].length;
+		q.add(row * wd + col);
+
+		while (!q.isEmpty()) {
+			int curr = q.remove();
+			if (vst.contains(curr)) {
+				continue;
 			}
-			System.out.println();
+			vst.add(curr);
+			int currRow = curr / wd, currCol = curr % wd;
+			board[currRow][currCol] = 'N';
+
+			int[][] dirs = { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
+			for (int i = 0; i < 4; i++) {
+				int nextRow = currRow + dirs[i][0], nextCol = currCol
+						+ dirs[i][1];
+				int nextNum = nextRow * wd + nextCol;
+				if (nextRow >= 0 && nextRow < ht && nextCol >= 0
+						&& nextCol < wd && board[nextRow][nextCol] == 'O'
+						&& !vst.contains(nextNum)) {
+					q.add(nextNum);
+				}
+			}
 		}
 	}
 
@@ -3668,77 +3571,60 @@ public class Solution {
 	 */
 
 	public void solveSudoku(char[][] board) {
-		int[] rows = new int[9];
-		int[] cols = new int[9];
-		int[] grids = new int[9];
-		int len = board.length;
-		for (int r = 0; r < len; r++) {
-			for (int c = 0; c < len; c++) {
-				if (board[r][c] != '.') {
-					int mask = 1 << (board[r][c] - '0' - 1);
-					rows[r] |= mask;
-					cols[c] |= mask;
-					grids[r / 3 * 3 + c / 3] |= mask;
+		if (board == null || board[0] == null || board.length != 9
+				|| board[0].length != 9) {
+			return;
+		}
+
+		boolean[][] rowMap = new boolean[9][9], colMap = new boolean[9][9], gridMap = new boolean[9][9];
+		getMaps(board, rowMap, colMap, gridMap);
+
+		solveSudokuDFS(board, rowMap, colMap, gridMap, 0);
+	}
+
+	private void getMaps(char[][] board, boolean[][] rowMap,
+			boolean[][] colMap, boolean[][] gridMap) {
+		for (int row = 0; row < 9; row++) {
+			for (int col = 0; col < 9; col++) {
+				if (board[row][col] != '.') {
+					int num = board[row][col] - '0' - 1;
+					rowMap[row][num] = true;
+					colMap[col][num] = true;
+					gridMap[row / 3 * 3 + col / 3][num] = true;
 				}
 			}
 		}
-		solveSudoku(board, 0, 0, rows, cols, grids);
 	}
 
-	private boolean solveSudoku(char[][] board, int row, int col, int[] rows,
-			int[] cols, int[] grids) {
-		int len = board.length;
-		if (row == len) {
+	private boolean solveSudokuDFS(char[][] board, boolean[][] rowMap,
+			boolean[][] colMap, boolean[][] gridMap, int index) {
+		if (index == 81) {
 			return true;
 		}
 
-		for (int r = row; r < len; r++) {
-			for (int c = 0; c < len; c++) {
-				if (board[r][c] == '.') {
-					int valid = rows[r] | cols[c] | grids[r / 3 * 3 + c / 3];
-					for (int i = 0; i < 9; i++) {
-						int mask = 1 << i;
-						if ((valid & mask) == 0) {
-							board[r][c] = (char) ('0' + i + 1);
-							rows[r] |= mask;
-							cols[c] |= mask;
-							grids[r / 3 * 3 + c / 3] |= mask;
-							int num = r * 9 + c + 1;
-							if (!solveSudoku(board, num / 9, num % 9, rows,
-									cols, grids)) {
-								board[r][c] = '.';
-								rows[r] ^= mask;
-								cols[c] ^= mask;
-								grids[r / 3 * 3 + c / 3] ^= mask;
-							} else {
-								return true;
-							}
-						}
+		int currRow = index / 9, currCol = index % 9;
+		char val = board[currRow][currCol];
+		if (val == '.') {
+			for (int i = 0; i < 9; i++) {
+				if (!rowMap[currRow][i] && !colMap[currCol][i]
+						&& !gridMap[currRow / 3 * 3 + currCol / 3][i]) {
+					rowMap[currRow][i] = true;
+					colMap[currCol][i] = true;
+					gridMap[currRow / 3 * 3 + currCol / 3][i] = true;
+					board[currRow][currCol] = (char) ('0' + i + 1);
+					if (solveSudokuDFS(board, rowMap, colMap, gridMap,
+							index + 1)) {
+						return true;
 					}
-					return false;
+					rowMap[currRow][i] = false;
+					colMap[currCol][i] = false;
+					gridMap[currRow / 3 * 3 + currCol / 3][i] = false;
+					board[currRow][currCol] = val;
 				}
 			}
-		}
-		return true;
-	}
-
-	@Test
-	public void testSolveSudoku() {
-		char[][] board = { { '.', '.', '9', '7', '4', '8', '.', '.', '.', },
-				{ '7', '.', '.', '.', '.', '.', '.', '.', '.', },
-				{ '.', '2', '.', '1', '.', '9', '.', '.', '.', },
-				{ '.', '.', '7', '.', '.', '.', '2', '4', '.', },
-				{ '.', '6', '4', '.', '1', '.', '5', '9', '.', },
-				{ '.', '9', '8', '.', '.', '.', '3', '.', '.', },
-				{ '.', '.', '.', '8', '.', '3', '.', '2', '.', },
-				{ '.', '.', '.', '.', '.', '.', '.', '.', '6', },
-				{ '.', '.', '.', '2', '7', '5', '9', '.', '.', }, };
-		solveSudoku(board);
-		for (char[] arr : board) {
-			for (char c : arr) {
-				System.out.print(c + " ");
-			}
-			System.out.println();
+			return false;
+		} else {
+			return solveSudokuDFS(board, rowMap, colMap, gridMap, index + 1);
 		}
 	}
 
@@ -6344,6 +6230,9 @@ public class Solution {
 		}
 	};
 
+	/*
+	 * first DFS, then clone neighbors
+	 */
 	public UndirectedGraphNode cloneGraph(UndirectedGraphNode node) {
 		if (node == null) {
 			return null;
@@ -6385,14 +6274,62 @@ public class Solution {
 		}
 	}
 
-	private void printUndirectedGraphNode(UndirectedGraphNode node) {
-		System.out.printf("(%d)->[", node.label);
-		for (UndirectedGraphNode nbr : node.neighbors) {
-			System.out.printf("%d, ", nbr.label);
+	/*
+	 * first BFS, then colone neighbors, one line difference from previous
+	 * method.
+	 */
+	public UndirectedGraphNode cloneGraph2(UndirectedGraphNode node) {
+		if (node == null) {
+			return null;
 		}
-		System.out.println("]");
+
+		HashMap<Integer, UndirectedGraphNode> map = new HashMap<Integer, UndirectedGraphNode>();
+		BFSgraph(node, map);
+
+		HashMap<Integer, UndirectedGraphNode> newMap = new HashMap<Integer, UndirectedGraphNode>();
+		for (Integer label : map.keySet()) {
+			UndirectedGraphNode oriNode = map.get(label);
+			UndirectedGraphNode newNode = newMap.get(label);
+			if (newNode == null) {
+				newNode = new UndirectedGraphNode(label);
+				newMap.put(label, newNode);
+			}
+			ArrayList<UndirectedGraphNode> newNgb = newNode.neighbors;
+			for (UndirectedGraphNode neighbor : oriNode.neighbors) {
+				UndirectedGraphNode ngb = newMap.get(neighbor.label);
+				if (ngb == null) {
+					ngb = new UndirectedGraphNode(neighbor.label);
+					newMap.put(ngb.label, ngb);
+				}
+				newNgb.add(ngb);
+			}
+		}
+
+		return newMap.get(node.label);
 	}
 
+	private void BFSgraph(UndirectedGraphNode node,
+			HashMap<Integer, UndirectedGraphNode> map) {
+		Queue<UndirectedGraphNode> q = new LinkedList<UndirectedGraphNode>();
+		q.add(node);
+		while (!q.isEmpty()) {
+			UndirectedGraphNode curr = q.remove();
+			if (map.containsKey(curr.label)) {
+				continue;
+			}
+			map.put(curr.label, curr);
+
+			for (UndirectedGraphNode ngb : curr.neighbors) {
+				if (!map.containsKey(ngb.label)) {
+					q.add(ngb);
+				}
+			}
+		}
+	}
+
+	/*
+	 * clone as you BFS
+	 */
 	public UndirectedGraphNode cloneGraphBFS(UndirectedGraphNode node) {
 		if (node == null) {
 			return null;
@@ -6427,28 +6364,9 @@ public class Solution {
 		return newNode;
 	}
 
-	private void printGraphBFS(UndirectedGraphNode node) {
-		if (node != null) {
-			Queue<UndirectedGraphNode> q = new LinkedList<UndirectedGraphNode>();
-			q.add(node);
-			HashSet<UndirectedGraphNode> v = new HashSet<Solution.UndirectedGraphNode>();
-			while (!q.isEmpty()) {
-				node = q.remove();
-				if (!v.contains(node)) {
-					printUndirectedGraphNode(node);
-					v.add(node);
-					for (UndirectedGraphNode nbr : node.neighbors) {
-						if (!v.contains(nbr)) {
-							q.add(nbr);
-						}
-					}
-				}
-			}
-		} else {
-			System.out.println("null");
-		}
-	}
-
+	/*
+	 * clone as you DFS
+	 */
 	public UndirectedGraphNode cloneGraphDFS(UndirectedGraphNode node) {
 		if (node == null) {
 			return null;
@@ -6477,50 +6395,6 @@ public class Solution {
 				cloneGraphDFS(nbr1, nbr2, m, v);
 			}
 		}
-	}
-
-	private void printGraphDFS(UndirectedGraphNode node) {
-		if (node == null) {
-			System.out.println("null");
-		} else {
-			HashSet<UndirectedGraphNode> v = new HashSet<Solution.UndirectedGraphNode>();
-			printGraphDFS(node, v);
-		}
-	}
-
-	private void printGraphDFS(UndirectedGraphNode node,
-			HashSet<UndirectedGraphNode> v) {
-		printUndirectedGraphNode(node);
-		v.add(node);
-		for (UndirectedGraphNode nbr : node.neighbors) {
-			if (!v.contains(nbr)) {
-				printGraphDFS(nbr, v);
-			}
-		}
-	}
-
-	@Test
-	public void testCloneGraph() {
-		UndirectedGraphNode[] nodes = new UndirectedGraphNode[4];
-		for (int i = 0; i < nodes.length; i++) {
-			nodes[i] = new UndirectedGraphNode(i);
-		}
-		nodes[0].neighbors.add(nodes[1]);
-		nodes[0].neighbors.add(nodes[2]);
-		nodes[0].neighbors.add(nodes[3]);
-		nodes[1].neighbors.add(nodes[2]);
-		nodes[2].neighbors.add(nodes[2]);
-		nodes[3].neighbors.add(nodes[1]);
-		nodes[3].neighbors.add(nodes[2]);
-		nodes[3].neighbors.add(nodes[3]);
-		printGraphDFS(nodes[0]);
-		System.out.println("---");
-		printGraphBFS(nodes[0]);
-		UndirectedGraphNode node = cloneGraphDFS(nodes[0]);
-		System.out.println("***");
-		printGraphDFS(node);
-		System.out.println("---");
-		printGraphBFS(node);
 	}
 
 	/**
@@ -7527,49 +7401,63 @@ public class Solution {
 	 */
 
 	public int ladderLength(String start, String end, HashSet<String> dict) {
-		if (start == null || end == null || start.length() != end.length()) {
+		if (start == null || end == null || start.equals(end) || dict == null) {
 			return 0;
 		}
-		if (start.equals(end)) {
-			return 1;
-		}
 
-		Queue<String> q = new LinkedList<String>();
-		q.add(start);
-		Queue<Integer> qcnt = new LinkedList<Integer>();
-		qcnt.add(1);
-		HashSet<String> v = new HashSet<String>();
-		int lenW = start.length();
-		char[] mchar = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-		while (!q.isEmpty()) {
-			String curr = q.remove();
-			Integer currCnt = qcnt.remove();
-			if (v.contains(curr)) {
-				continue;
-			}
-			v.add(curr);
-
-			ArrayList<String> trans = new ArrayList<String>();
-			for (int i = 0; i < lenW; i++) {
-				for (int j = 0; j < 26; j++) {
-					StringBuilder currsb = new StringBuilder(curr);
-					currsb.replace(i, i + 1, String.valueOf(mchar[j]));
-					String next = currsb.toString();
-					if (next.equals(end)) {
-						return currCnt + 1;
-					}
-					if (dict.contains(next) && !v.contains(next)) {
-						trans.add(next);
-					}
+		Set<String> source = new HashSet<String>(), dest = new HashSet<String>();
+		Set<String> visited = new HashSet<String>();
+		source.add(start);
+		int count = 1;
+		boolean found = false;
+		while (!source.isEmpty() && !found) {
+			for (String word : source) {
+				if (visited.contains(word)) {
+					continue;
+				}
+				visited.add(word);
+				if (transform(word, end, dest, visited, dict)) {
+					found = true;
+					break;
 				}
 			}
 
-			for (String next : trans) {
-				q.add(next);
-				qcnt.add(currCnt + 1);
-			}
+			count++;
+			source.clear();
+			Set<String> temp = source;
+			source = dest;
+			dest = temp;
 		}
-		return 0;
+
+		if (found) {
+			return count;
+		} else {
+			return 0;
+		}
+	}
+
+	private boolean transform(String word, String end, Set<String> dest,
+			Set<String> visited, Set<String> dict) {
+		char[] chs = word.toCharArray();
+		for (int i = 0; i < chs.length; i++) {
+			char ch = chs[i];
+			for (char c = 'a'; c <= 'z'; c++) {
+				if (ch != c) {
+					chs[i] = c;
+					String newWord = new String(chs);
+					if (dict.contains(newWord) && !visited.contains(newWord)) {
+						if (newWord.equals(end)) {
+							return true;
+						} else {
+							dest.add(newWord);
+						}
+					}
+				}
+			}
+			chs[i] = ch;
+		}
+
+		return false;
 	}
 
 	/**
@@ -7908,6 +7796,109 @@ public class Solution {
 		}
 	}
 
+	public ArrayList<ArrayList<String>> findLadders(String start, String end,
+			HashSet<String> dict) {
+		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
+		if (start == null || end == null || dict == null) {
+			return result;
+		} else if (start.equals(end)) {
+			ArrayList<String> path = new ArrayList<String>();
+			path.add(start);
+			result.add(path);
+			return result;
+		}
+
+		Set<String> src = new HashSet<String>(), dst = new HashSet<String>(), vst = new HashSet<String>();
+		Map<String, ArrayList<String>> preceeds = new HashMap<String, ArrayList<String>>();
+		boolean found = false;
+		src.add(start);
+		int count = 1;
+		while (!src.isEmpty() && !found) {
+			for (String word : src) {
+				if (vst.contains(word)) {
+					continue;
+				}
+				vst.add(word);
+				if (transformBFS(word, end, dst, vst, preceeds, dict)) {
+					found = true;
+				}
+			}
+
+			count++;
+			src.clear();
+			Set<String> tmp = src;
+			src = dst;
+			dst = tmp;
+		}
+
+		if (found) {
+			ArrayList<String> path = new ArrayList<String>();
+			path.add(end);
+			DFSpreceeds(result, path, count, preceeds);
+		}
+
+		return result;
+	}
+
+	private boolean transformBFS(String word, String end, Set<String> dst,
+			Set<String> vst, Map<String, ArrayList<String>> preceeds,
+			Set<String> dict) {
+		char[] chs = word.toCharArray();
+		boolean flag = false;
+		for (int i = 0; i < chs.length; i++) {
+			char ch = chs[i];
+			for (char c = 'a'; c <= 'z'; c++) {
+				if (c != ch) {
+					chs[i] = c;
+					String newWord = new String(chs);
+					if (dict.contains(newWord) && !vst.contains(newWord)) {
+						if (end.equals(newWord)) {
+							flag = true;
+						} else {
+							dst.add(newWord);
+						}
+						ArrayList<String> prcd = preceeds.get(newWord);
+						if (prcd == null) {
+							prcd = new ArrayList<String>();
+							preceeds.put(newWord, prcd);
+						}
+						prcd.add(word);
+
+						if (flag) {
+							return true;
+						}
+					}
+				}
+			}
+			chs[i] = ch;
+		}
+
+		return false;
+	}
+
+	private void DFSpreceeds(ArrayList<ArrayList<String>> result,
+			ArrayList<String> path, int count,
+			Map<String, ArrayList<String>> preceeds) {
+		if (count <= 0) {
+			return;
+		}
+		ArrayList<String> prcd = preceeds.get(path.get(path.size() - 1));
+		if (prcd == null && count == 1) {
+			ArrayList<String> newPath = new ArrayList<String>();
+			for (int i = path.size() - 1; i >= 0; i--) {
+				newPath.add(path.get(i));
+			}
+			result.add(newPath);
+			return;
+		}
+
+		for (String wd : prcd) {
+			path.add(wd);
+			DFSpreceeds(result, path, count - 1, preceeds);
+			path.remove(path.size() - 1);
+		}
+	}
+
 	/*
 	 * used two sets to save BFS layers, and a map to save previous nodes of a
 	 * word, but TLE, need to inspect further.
@@ -8075,61 +8066,54 @@ public class Solution {
 	 */
 
 	public boolean isMatchRegExp(String s, String p) {
-		if (p.isEmpty()) {
-			return s.isEmpty();
-		}
-
-		int lenS = s.length(), lenP = p.length();
-
-		if (s.isEmpty()) {
-			int i = 0;
-			for (; i < lenP - 1; i += 2) {
-				if (p.charAt(i) == '*' || p.charAt(i + 1) != '*') {
-					return false;
-				}
-			}
-			if (i == lenP - 1) {
-				return false;
-			}
-			return true;
-		}
-
-		// important prune! checks if the last letter matches if it is not '*'
-		// or '.'
-		if (p.charAt(lenP - 1) != '*' && p.charAt(lenP - 1) != '.'
-				&& p.charAt(lenP - 1) != s.charAt(lenS - 1)) {
+		if (s == null || p == null) {
 			return false;
 		}
 
-		if (p.charAt(0) != '.') {
-			if (lenP > 1 && p.charAt(1) == '*') {
-				int end = 0;
-				char ch = p.charAt(0);
-				while (end < lenS && s.charAt(end) == ch) {
-					end++;
-				}
-				for (; end >= 0; end--) {
-					if (isMatchRegExp(s.substring(end), p.substring(2))) {
+		if (p.isEmpty()) {
+			return s.isEmpty();
+		} else if (s.isEmpty()) {
+			if (p.length() >= 2 && p.charAt(0) != '*' && p.charAt(1) == '*') {
+				return isMatch(s, p.substring(2));
+			} else {
+				return false;
+			}
+		}
+
+		char lasts = s.charAt(s.length() - 1), lastp = p.charAt(p.length() - 1);
+		if (lastp != '*' && lastp != '.' && lastp != lasts) {
+			return false;
+		}
+
+		if (p.charAt(0) == '*') {
+			return false;
+		}
+
+		if (p.length() > 1 && p.charAt(1) == '*') {
+			if (p.charAt(0) == '.') {
+				for (int i = s.length(); i >= 0; i--) {
+					if (isMatch(s.substring(i), p.substring(2))) {
 						return true;
 					}
 				}
 				return false;
-			} else if (s.charAt(0) != p.charAt(0)) {
-				return false;
 			} else {
-				return isMatchRegExp(s.substring(1), p.substring(1));
+				int index = 0;
+				while (index < s.length() && s.charAt(index) == p.charAt(0)) {
+					index++;
+				}
+				for (int i = index; i >= 0; i--) {
+					if (isMatch(s.substring(i), p.substring(2))) {
+						return true;
+					}
+				}
+				return false;
 			}
+		} else if (p.charAt(0) == '.') {
+			return isMatch(s.substring(1), p.substring(1));
 		} else {
-			if (lenP > 1 && p.charAt(1) == '*') {
-				for (int i = lenS; i >= 0; i--) {
-					if (isMatchRegExp(s.substring(i), p.substring(2))) {
-						return true;
-					}
-				}
-				return false;
-			} else {
-				return isMatchRegExp(s.substring(1), p.substring(1));
-			}
+			return p.charAt(0) == s.charAt(0)
+					&& isMatch(s.substring(1), p.substring(1));
 		}
 	}
 
