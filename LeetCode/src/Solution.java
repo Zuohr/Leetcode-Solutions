@@ -736,32 +736,33 @@ public class Solution {
 	 * DFS
 	 */
 	public ArrayList<ArrayList<Integer>> permuteDFS(int[] num) {
-        ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-        if (num == null) {
-            return result;
-        }
-        
-        Arrays.sort(num);
-        ArrayList<Integer> permutation = new ArrayList<Integer>();
-        permuteDFS(result, permutation, num);
-        
-        return result;
-    }
-    
-    private void permuteDFS(ArrayList<ArrayList<Integer>> result, ArrayList<Integer> permutation, int[] num) {
-        if (permutation.size() == num.length) {
-            result.add(new ArrayList<Integer>(permutation));
-            return;
-        }
-        
-        for (int i = 0; i < num.length; i++) {
-            if (!permutation.contains(num[i])) {
-                permutation.add(num[i]);
-                permuteDFS(result, permutation, num);
-                permutation.remove(permutation.size() - 1);
-            }
-        }
-    }
+		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
+		if (num == null) {
+			return result;
+		}
+
+		Arrays.sort(num);
+		ArrayList<Integer> permutation = new ArrayList<Integer>();
+		permuteDFS(result, permutation, num);
+
+		return result;
+	}
+
+	private void permuteDFS(ArrayList<ArrayList<Integer>> result,
+			ArrayList<Integer> permutation, int[] num) {
+		if (permutation.size() == num.length) {
+			result.add(new ArrayList<Integer>(permutation));
+			return;
+		}
+
+		for (int i = 0; i < num.length; i++) {
+			if (!permutation.contains(num[i])) {
+				permutation.add(num[i]);
+				permuteDFS(result, permutation, num);
+				permutation.remove(permutation.size() - 1);
+			}
+		}
+	}
 
 	/*
 	 * (optimal) use next_permutation algorithm
@@ -1153,55 +1154,6 @@ public class Solution {
 		}
 
 		return maxProfit;
-	}
-
-	/**
-	 * $(Linked List Cycle)
-	 * 
-	 * Given a linked list, determine if it has a cycle in it.
-	 * 
-	 * Follow up: Can you solve it without using extra space?
-	 */
-
-	/*
-	 * 1. In a cycled singly linked list none of the nodes points to null as its
-	 * next.
-	 * 
-	 * 2. Use two pointers to iterate the linked list, one faster than the
-	 * other, if there is a cycle, they will finally meet in the cycle.
-	 */
-	public boolean hasCycle(ListNode head) {
-		ListNode slow = head, fast = head;
-		while (fast != null) {
-			fast = fast.next;
-			if (fast == null) {
-				return false;
-			}
-			fast = fast.next;
-			slow = slow.next;
-			if (fast == slow) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	@Test
-	public void testHasCycle() {
-		ListNode head = new ListNode(0);
-		ListNode a1 = new ListNode(0);
-		ListNode a2 = new ListNode(0);
-		ListNode a3 = new ListNode(0);
-		ListNode a4 = new ListNode(0);
-		ListNode a5 = new ListNode(0);
-		head.next = head;
-		a1.next = a2;
-		a2.next = a3;
-		a3.next = a4;
-		a4.next = a5;
-		a5.next = head;
-		System.out.println(hasCycle(head));
 	}
 
 	/**
@@ -1914,6 +1866,38 @@ public class Solution {
 	}
 
 	/**
+	 * $(Linked List Cycle)
+	 * 
+	 * Given a linked list, determine if it has a cycle in it.
+	 * 
+	 * Follow up: Can you solve it without using extra space?
+	 */
+
+	/*
+	 * 1. In a cycled singly linked list none of the nodes points to null as its
+	 * next.
+	 * 
+	 * 2. Use two pointers to iterate the linked list, one faster than the
+	 * other, if there is a cycle, they will finally meet in the cycle.
+	 */
+	public boolean hasCycle(ListNode head) {
+		ListNode slow = head, fast = head;
+		while (fast != null) {
+			fast = fast.next;
+			if (fast == null) {
+				return false;
+			}
+			fast = fast.next;
+			slow = slow.next;
+			if (fast == slow) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * $(Linked List Cycle II)
 	 * 
 	 * Given a linked list, return the node where the cycle begins. If there is
@@ -1942,6 +1926,27 @@ public class Solution {
 			slow = slow.next;
 		}
 		return fast;
+	}
+
+	/*
+	 * use hashset to store visited nodes
+	 */
+	public ListNode detectCycle2(ListNode head) {
+		if (head == null) {
+			return head;
+		}
+
+		Set<ListNode> vst = new HashSet<ListNode>();
+		ListNode ptr = head;
+		while (ptr != null) {
+			if (vst.contains(ptr)) {
+				return ptr;
+			}
+			vst.add(ptr);
+			ptr = ptr.next;
+		}
+
+		return null;
 	}
 
 	/**
@@ -7744,24 +7749,23 @@ public class Solution {
 		if (start == null || end == null || dict == null) {
 			return result;
 		} else if (start.equals(end)) {
-			ArrayList<String> path = new ArrayList<String>();
-			path.add(start);
-			result.add(path);
-			return result;
+			ArrayList<String> sequence = new ArrayList<String>();
+			sequence.add(start);
+			result.add(sequence);
 		}
 
 		Set<String> src = new HashSet<String>(), dst = new HashSet<String>(), vst = new HashSet<String>();
-		Map<String, ArrayList<String>> preceeds = new HashMap<String, ArrayList<String>>();
-		boolean found = false;
+		Map<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
 		src.add(start);
+		boolean found = false;
 		int count = 1;
 		while (!src.isEmpty() && !found) {
-			for (String word : src) {
-				if (vst.contains(word)) {
+			for (String curr : src) {
+				if (vst.contains(curr)) {
 					continue;
 				}
-				vst.add(word);
-				if (transformBFS(word, end, dst, vst, preceeds, dict)) {
+				vst.add(curr);
+				if (trans(curr, end, dst, vst, dict, map)) {
 					found = true;
 				}
 			}
@@ -7774,38 +7778,36 @@ public class Solution {
 		}
 
 		if (found) {
-			ArrayList<String> path = new ArrayList<String>();
-			path.add(end);
-			DFSpreceeds(result, path, count, preceeds);
+			ArrayList<String> sequence = new ArrayList<String>();
+			sequence.add(end);
+			generatedSequences(result, sequence, count, map);
 		}
-
 		return result;
 	}
 
-	private boolean transformBFS(String word, String end, Set<String> dst,
-			Set<String> vst, Map<String, ArrayList<String>> preceeds,
-			Set<String> dict) {
-		char[] chs = word.toCharArray();
+	private boolean trans(String curr, String end, Set<String> dst,
+			Set<String> vst, Set<String> dict,
+			Map<String, ArrayList<String>> map) {
+		char[] chs = curr.toCharArray();
 		boolean flag = false;
 		for (int i = 0; i < chs.length; i++) {
 			char ch = chs[i];
 			for (char c = 'a'; c <= 'z'; c++) {
-				if (c != ch) {
+				if (ch != c) {
 					chs[i] = c;
-					String newWord = new String(chs);
-					if (dict.contains(newWord) && !vst.contains(newWord)) {
-						if (end.equals(newWord)) {
+					String next = new String(chs);
+					if (dict.contains(next) && !vst.contains(next)) {
+						if (end.equals(next)) {
 							flag = true;
 						} else {
-							dst.add(newWord);
+							dst.add(next);
 						}
-						ArrayList<String> prcd = preceeds.get(newWord);
-						if (prcd == null) {
-							prcd = new ArrayList<String>();
-							preceeds.put(newWord, prcd);
+						ArrayList<String> list = map.get(next);
+						if (list == null) {
+							list = new ArrayList<String>();
+							map.put(next, list);
 						}
-						prcd.add(word);
-
+						list.add(curr);
 						if (flag) {
 							return true;
 						}
@@ -7818,115 +7820,27 @@ public class Solution {
 		return false;
 	}
 
-	private void DFSpreceeds(ArrayList<ArrayList<String>> result,
-			ArrayList<String> path, int count,
-			Map<String, ArrayList<String>> preceeds) {
+	private void generatedSequences(ArrayList<ArrayList<String>> result,
+			ArrayList<String> sequence, int count,
+			Map<String, ArrayList<String>> map) {
 		if (count <= 0) {
 			return;
 		}
-		ArrayList<String> prcd = preceeds.get(path.get(path.size() - 1));
-		if (prcd == null && count == 1) {
-			ArrayList<String> newPath = new ArrayList<String>();
-			for (int i = path.size() - 1; i >= 0; i--) {
-				newPath.add(path.get(i));
+
+		String curr = sequence.get(sequence.size() - 1);
+		if (count == 1 && map.get(curr) == null) {
+			ArrayList<String> seq = new ArrayList<String>();
+			for (int i = sequence.size() - 1; i >= 0; i--) {
+				seq.add(sequence.get(i));
 			}
-			result.add(newPath);
+			result.add(seq);
 			return;
 		}
 
-		for (String wd : prcd) {
-			path.add(wd);
-			DFSpreceeds(result, path, count - 1, preceeds);
-			path.remove(path.size() - 1);
-		}
-	}
-
-	/*
-	 * used two sets to save BFS layers, and a map to save previous nodes of a
-	 * word, but TLE, need to inspect further.
-	 */
-	public ArrayList<ArrayList<String>> findLaddersTLE3(String start,
-			String end, HashSet<String> dict) {
-		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
-		if (start == null || end == null || start.length() != end.length()) {
-			return result;
-		}
-		if (start.equals(end)) {
-			ArrayList<String> newPath = new ArrayList<String>();
-			newPath.add(start);
-			result.add(newPath);
-			return result;
-		}
-
-		int lenW = start.length();
-		HashMap<String, HashSet<String>> mprev = new HashMap<String, HashSet<String>>();
-		mprev.put(start, null);
-		ArrayList<HashSet<String>> arrs = new ArrayList<HashSet<String>>(2);
-		arrs.add(new HashSet<String>());
-		arrs.add(new HashSet<String>());
-		int currArr = 0, nextArr = 1, pathlen = 0;
-		arrs.get(currArr).add(start);
-		boolean found = false;
-		while (!found && !arrs.get(currArr).isEmpty()) {
-			HashSet<String> currList = arrs.get(currArr);
-			HashSet<String> nextList = arrs.get(nextArr);
-			for (String word : currList) {
-				dict.remove(word);
-			}
-			for (String word : currList) {
-				if (word.equals(end)) {
-					found = true;
-					continue;
-				}
-				char[] chArr = word.toCharArray();
-				for (int i = 0; i < lenW; i++) {
-					char temp = chArr[i];
-					for (char ch = 'a'; ch <= 'z'; ch++) {
-						chArr[i] = ch;
-						String next = new String(chArr);
-						if (!found && dict.contains(next)) {
-							nextList.add(next);
-							HashSet<String> prev = mprev.get(next);
-							if (prev == null) {
-								prev = new HashSet<String>();
-								mprev.put(next, prev);
-							}
-							prev.add(word);
-						}
-					}
-					chArr[i] = temp;
-				}
-			}
-			currList.clear();
-			currArr ^= nextArr;
-			nextArr ^= currArr;
-			currArr ^= nextArr;
-			pathlen++;
-		}
-		if (found) {
-			ArrayList<String> path = new ArrayList<String>();
-			path.add(end);
-			retrievePath(result, end, mprev, path, pathlen);
-		}
-		return result;
-	}
-
-	private void retrievePath(ArrayList<ArrayList<String>> result, String root,
-			HashMap<String, HashSet<String>> mprev, ArrayList<String> path,
-			int pathlen) {
-		HashSet<String> prev = mprev.get(root);
-		if (pathlen == 1) {
-			if (prev == null) {
-				ArrayList<String> newPath = new ArrayList<String>(path);
-				result.add(newPath);
-			}
-			return;
-		} else {
-			for (String next : prev) {
-				path.add(0, next);
-				retrievePath(result, next, mprev, path, pathlen - 1);
-				path.remove(0);
-			}
+		for (String next : map.get(curr)) {
+			sequence.add(next);
+			generatedSequences(result, sequence, count - 1, map);
+			sequence.remove(sequence.size() - 1);
 		}
 	}
 
@@ -7980,8 +7894,7 @@ public class Solution {
 			dict.add(word);
 		}
 		System.out.println(dict.size());
-		ArrayList<ArrayList<String>> result = findLaddersTLE3("cali", "fobs",
-				dict);
+		ArrayList<ArrayList<String>> result = findLadders("cali", "fobs", dict);
 		System.out.println(result.size());
 		for (ArrayList<String> path : result) {
 			System.out.println(path);
