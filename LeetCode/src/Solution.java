@@ -609,18 +609,20 @@ public class Solution {
 	}
 
 	private void flipBFS(char[][] board, int row, int col) {
-		Set<Integer> vst = new HashSet<Integer>();
+		/*
+		 * a 'vst' set is not required since the change of pixel can function as
+		 * a mark
+		 */
 		Queue<Integer> q = new LinkedList<Integer>();
 		int ht = board.length, wd = board[0].length;
 		q.add(row * wd + col);
 
 		while (!q.isEmpty()) {
 			int curr = q.remove();
-			if (vst.contains(curr)) {
+			int currRow = curr / wd, currCol = curr % wd;
+			if (board[currRow][currCol] != 'O') {
 				continue;
 			}
-			vst.add(curr);
-			int currRow = curr / wd, currCol = curr % wd;
 			board[currRow][currCol] = 'N';
 
 			int[][] dirs = { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
@@ -629,8 +631,7 @@ public class Solution {
 						+ dirs[i][1];
 				int nextNum = nextRow * wd + nextCol;
 				if (nextRow >= 0 && nextRow < ht && nextCol >= 0
-						&& nextCol < wd && board[nextRow][nextCol] == 'O'
-						&& !vst.contains(nextNum)) {
+						&& nextCol < wd && board[nextRow][nextCol] == 'O') {
 					q.add(nextNum);
 				}
 			}
