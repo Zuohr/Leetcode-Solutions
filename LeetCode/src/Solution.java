@@ -733,83 +733,38 @@ public class Solution {
 	 */
 
 	/*
-	 * Solution 1: can't identify duplicated cases.
+	 * DFS
 	 */
-	public ArrayList<ArrayList<Integer>> permuteNaive(int[] num) {
-		if (num == null) {
-			return null;
-		}
-		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		permuteNaive(result, new int[] {}, num, 0);
-		return result;
-	}
-
-	private void permuteNaive(ArrayList<ArrayList<Integer>> result,
-			int[] sofar, int[] rest, int index) {
-		if (rest.length == 0) {
-			ArrayList<Integer> permutation = new ArrayList<Integer>();
-			for (int n : sofar) {
-				permutation.add(n);
-			}
-			result.add(permutation);
-			return;
-		}
-		for (int i = 0; i < rest.length; i++) {
-			int[] newSofar = new int[sofar.length + 1];
-			for (int j = 0; j < sofar.length; j++) {
-				newSofar[j] = sofar[j];
-			}
-			newSofar[newSofar.length - 1] = rest[i];
-			int[] newRest = new int[rest.length - 1];
-			int idx = 0;
-			for (int j = 0; j < i; j++) {
-				newRest[idx++] = rest[j];
-			}
-			for (int j = i + 1; j < rest.length; j++) {
-				newRest[idx++] = rest[j];
-			}
-			permuteNaive(result, newSofar, newRest, index + 1);
-		}
-	}
+	public ArrayList<ArrayList<Integer>> permuteDFS(int[] num) {
+        ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
+        if (num == null) {
+            return result;
+        }
+        
+        Arrays.sort(num);
+        ArrayList<Integer> permutation = new ArrayList<Integer>();
+        permuteDFS(result, permutation, num);
+        
+        return result;
+    }
+    
+    private void permuteDFS(ArrayList<ArrayList<Integer>> result, ArrayList<Integer> permutation, int[] num) {
+        if (permutation.size() == num.length) {
+            result.add(new ArrayList<Integer>(permutation));
+            return;
+        }
+        
+        for (int i = 0; i < num.length; i++) {
+            if (!permutation.contains(num[i])) {
+                permutation.add(num[i]);
+                permuteDFS(result, permutation, num);
+                permutation.remove(permutation.size() - 1);
+            }
+        }
+    }
 
 	/*
-	 * Solution 2 : more efficient and less complex than the previous one, uses
-	 * recursion, not able to identify duplicated cases.
-	 */
-	public ArrayList<ArrayList<Integer>> permuteImproved(int[] num) {
-		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		permuteImproved(result, num, 0, false);
-
-		return result;
-	}
-
-	private void permuteImproved(ArrayList<ArrayList<Integer>> result,
-			int[] num, int index, boolean swapped) {
-		if (index == num.length) {
-			ArrayList<Integer> newArr = new ArrayList<Integer>();
-			for (int i = 0; i < num.length; i++) {
-				newArr.add(num[i]);
-			}
-			result.add(newArr);
-			return;
-		}
-		for (int i = index; i < num.length; i++) {
-			if (index != i) {
-				num[index] ^= num[i];
-				num[i] ^= num[index];
-				num[index] ^= num[i];
-			}
-			if (index != i) {
-				permuteImproved(result, num, index + 1, true);
-				num[index] ^= num[i];
-				num[i] ^= num[index];
-				num[index] ^= num[i];
-			}
-		}
-	}
-
-	/*
-	 * Solution 3: (optimal) use next_permutation algorithm
+	 * (optimal) use next_permutation algorithm
 	 */
 	public ArrayList<ArrayList<Integer>> permute(int[] num) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
@@ -829,7 +784,7 @@ public class Solution {
 		return result;
 	}
 
-	public boolean nextPermutation(int[] num, int start, int end) {
+	private boolean nextPermutation(int[] num, int start, int end) {
 		int tail = end;
 		while (tail > start && num[tail] <= num[tail - 1]) {
 			tail--;
@@ -912,13 +867,6 @@ public class Solution {
 		return result;
 	}
 
-	@Test
-	public void testGetPermutation() {
-		for (int i = 1; i <= 120; i++) {
-			System.out.println(i + " " + getPermutation(5, i));
-		}
-	}
-
 	/**
 	 * $(Next Permutation)
 	 * 
@@ -937,13 +885,6 @@ public class Solution {
 
 	public void nextPermutation(int[] num) {
 		nextPermutation(num, 0, num.length - 1);
-	}
-
-	@Test
-	public void testNextPermutation() {
-		int[] num = new int[] { 5, 4, 3, 2, 1 };
-		nextPermutation(num, 0, num.length - 1);
-		System.out.println(Arrays.toString(num));
 	}
 
 	/**
