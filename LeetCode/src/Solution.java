@@ -1647,67 +1647,26 @@ public class Solution {
 	 * pass.
 	 */
 
-	/*
-	 * Use one pointer lag behind the first by n nodes.
-	 */
 	public ListNode removeNthFromEnd(ListNode head, int n) {
-		if (head != null) {
-			ListNode bp = null, p = null, fp = head;
-			boolean dcr = true;
-			while (fp != null) {
-				fp = fp.next;
-				if (dcr) {
-					n--;
-				}
-				if (n == 0) {
-					p = head;
-				} else if (n == -1) {
-					p = p.next;
-					bp = head;
-				} else if (n < -1) {
-					p = p.next;
-					bp = bp.next;
-					dcr = false;
-				}
-			}
-			if (p == head) {
-				head = p.next;
-			} else {
-				bp.next = p.next;
-			}
+		if (head == null || n <= 0) {
+			return null;
 		}
 
-		return head;
-	}
-
-	/*
-	 * use dummy head
-	 */
-	public ListNode removeNthFromEndDummyHead(ListNode head, int n) {
-		if (n <= 0) {
-			return head;
-		}
-
-		ListNode dummy = new ListNode(0);
+		ListNode dummy = new ListNode(0), front = dummy, back = dummy;
 		dummy.next = head;
-		ListNode front = dummy, back = dummy;
-
-		int cnt = 0;
-		for (; cnt <= n && front != null; cnt++) {
+		while (n >= 0) {
 			front = front.next;
-		}
-		if (cnt <= n) {
-			return head;
+			n--;
 		}
 
-		dummy.next = head;
 		while (front != null) {
 			front = front.next;
 			back = back.next;
 		}
+
 		back.next = back.next.next;
-		head = dummy.next;
-		return head;
+
+		return dummy.next;
 	}
 
 	/**
@@ -5512,23 +5471,22 @@ public class Solution {
 	 */
 
 	public TreeNode sortedListToBST(ListNode head) {
-		if (head == null) {
-			return null;
-		}
-		int count = 0;
+		int len = 0;
 		ListNode ptr = head;
 		while (ptr != null) {
-			count++;
+			len++;
 			ptr = ptr.next;
 		}
-		return sortedListToBST(head, 0, count - 1);
+
+		return sortedListToBST(head, 0, len - 1);
 	}
 
 	private TreeNode sortedListToBST(ListNode head, int start, int end) {
 		if (start > end) {
 			return null;
 		}
-		int mid = (start + end) / 2, count = mid - start;
+
+		int mid = start + (end - start) / 2, count = mid - start;
 		ListNode ptr = head;
 		for (int i = 0; i < count; i++) {
 			ptr = ptr.next;
@@ -5537,18 +5495,6 @@ public class Solution {
 		root.left = sortedListToBST(head, start, mid - 1);
 		root.right = sortedListToBST(ptr.next, mid + 1, end);
 		return root;
-	}
-
-	@Test
-	public void testSortedListToBST() {
-		ListNode head = new ListNode(0), ptr = head;
-		for (int i = 1; i <= 5; i++) {
-			ListNode newNode = new ListNode(i);
-			ptr.next = newNode;
-			ptr = ptr.next;
-		}
-		TreeNode root = sortedListToBST(head);
-		printBST(root);
 	}
 
 	/**
