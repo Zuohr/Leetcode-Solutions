@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 
@@ -232,6 +231,35 @@ public class Solution {
 			}
 		}
 		return head;
+	}
+
+	/**
+	 * $(Remove Duplicates from Sorted List II)
+	 * 
+	 * Given a sorted linked list, delete all nodes that have duplicate numbers,
+	 * leaving only distinct numbers from the original list.
+	 * 
+	 * For example, Given 1->2->3->3->4->4->5, return 1->2->5. Given
+	 * 1->1->1->2->3, return 2->3.
+	 */
+
+	public ListNode deleteDuplicates(ListNode head) {
+		ListNode dummy = new ListNode(0);
+		dummy.next = head;
+		ListNode ptr = dummy;
+
+		while (ptr != null && ptr.next != null && ptr.next.next != null) {
+			if (ptr.next.val == ptr.next.next.val) {
+				int val = ptr.next.val;
+				while (ptr.next != null && ptr.next.val == val) {
+					ptr.next = ptr.next.next;
+				}
+			} else {
+				ptr = ptr.next;
+			}
+		}
+
+		return dummy.next;
 	}
 
 	/**
@@ -1055,19 +1083,6 @@ public class Solution {
 			front = mid.next;
 		}
 		return dummy.next;
-	}
-
-	private void printLinkedList(ListNode head) {
-		if (head == null) {
-			System.out.println("null");
-			return;
-		}
-		ListNode ptr = head;
-		while (ptr != null) {
-			System.out.print(ptr.val + " ");
-			ptr = ptr.next;
-		}
-		System.out.println();
 	}
 
 	/**
@@ -2061,42 +2076,43 @@ public class Solution {
 	 */
 
 	public void reorderList(ListNode head) {
-		if (head != null) {
-			Stack<ListNode> s = new Stack<ListNode>();
-			ListNode ptr = head;
-			int count = 0;
-			while (ptr != null) {
-				s.push(ptr);
-				count++;
-				ptr = ptr.next;
-			}
-			ListNode bp = head, fp = bp.next;
-			for (int i = 0; i < (count - 1) / 2; i++) {
-				ListNode p = s.pop();
-				bp.next = p;
-				p.next = fp;
-				bp = fp;
-				fp = fp.next;
-			}
-			if (count % 2 == 0) {
-				fp.next = null;
-			} else {
-				bp.next = null;
-			}
+		if (head == null) {
+			return;
+		}
+
+		ListNode dummy = new ListNode(0), fast = dummy, slow = dummy;
+		dummy.next = head;
+		while (fast != null && fast.next != null) {
+			fast = fast.next.next;
+			slow = slow.next;
+		}
+
+		ListNode dummy2 = new ListNode(0);
+		dummy2.next = reverseLinkedList(slow.next);
+		slow.next = null;
+
+		ListNode ptr1 = head, ptr2 = dummy2.next;
+		while (ptr2 != null) {
+			dummy2.next = ptr2.next;
+			ptr2.next = ptr1.next;
+			ptr1.next = ptr2;
+			ptr1 = ptr2.next;
+			ptr2 = dummy2.next;
 		}
 	}
 
-	@Test
-	public void testReorderList() {
-		ListNode head = new ListNode(1);
-		ListNode ptr = head;
-		for (int i = 2; i <= 10; i++) {
-			ListNode node = new ListNode(i);
-			ptr.next = node;
-			ptr = ptr.next;
+	private ListNode reverseLinkedList(ListNode head) {
+		ListNode dummy = new ListNode(0);
+		dummy.next = head;
+		ListNode ptr = dummy.next, newHead = null;
+		while (ptr != null) {
+			dummy.next = ptr.next;
+			ptr.next = newHead;
+			newHead = ptr;
+			ptr = dummy.next;
 		}
-		reorderList(head);
-		printLinkedList(head);
+
+		return newHead;
 	}
 
 	/**
@@ -2228,85 +2244,25 @@ public class Solution {
 	};
 
 	public RandomListNode copyRandomList(RandomListNode head) {
-		if (head == null) {
-			return null;
-		}
-
-		RandomListNode srcPtr = head, dstHead = null, dstPtr = null;
-		int index = 0;
-		HashMap<RandomListNode, Integer> map = new HashMap<RandomListNode, Integer>();
-		ArrayList<RandomListNode> newList = new ArrayList<RandomListNode>();
-
-		while (srcPtr != null) {
-			map.put(srcPtr, index++);
-			RandomListNode newNode = new RandomListNode(srcPtr.label);
-			newList.add(newNode);
-			if (dstHead == null) {
-				dstHead = newNode;
-				dstPtr = dstHead;
-			} else {
-				dstPtr.next = newNode;
-				dstPtr = newNode;
-			}
-			srcPtr = srcPtr.next;
-		}
-
-		int[] randTable = new int[index];
-		index = 0;
-		srcPtr = head;
-		while (srcPtr != null) {
-			if (srcPtr.random == null) {
-				randTable[index++] = -1;
-			} else {
-				randTable[index++] = map.get(srcPtr.random);
-			}
-			srcPtr = srcPtr.next;
-		}
-
-		for (int i = 0; i < newList.size(); i++) {
-			if (randTable[i] == -1) {
-				newList.get(i).random = null;
-			} else {
-				newList.get(i).random = newList.get(randTable[i]);
-			}
-		}
-
-		return dstHead;
-	}
-
-	private void printRandomList(RandomListNode head) {
-		RandomListNode ptr = head;
+		RandomListNode ptr = head, dummy = new RandomListNode(0), ptrcpy = dummy;
+		Map<RandomListNode, RandomListNode> map = new HashMap<RandomListNode, RandomListNode>();
 		while (ptr != null) {
-			System.out.print(ptr.label + "("
-					+ (ptr.random == null ? "null" : ptr.random.label) + ")"
-					+ "->");
+			RandomListNode newNode = new RandomListNode(ptr.label);
+			map.put(ptr, newNode);
+			ptrcpy.next = newNode;
+			ptrcpy = ptrcpy.next;
 			ptr = ptr.next;
 		}
-		System.out.println("null");
-	}
 
-	@Test
-	public void testCopyRandomList() {
-		RandomListNode head = new RandomListNode(0), ptr = head;
-		ArrayList<RandomListNode> arr = new ArrayList<RandomListNode>();
-		arr.add(head);
-		int len = 9;
-		for (int i = 1; i < len; i++) {
-			RandomListNode newNode = new RandomListNode(i);
-			arr.add(newNode);
-			ptr.next = newNode;
-			ptr = ptr.next;
-		}
-		for (int i = 0; i < arr.size(); i++) {
-			if (Math.random() < 0.2) {
-				arr.get(i).random = null;
-			} else {
-				arr.get(i).random = arr.get(new Random().nextInt(len));
+		for (RandomListNode node : map.keySet()) {
+			RandomListNode cpyNode = map.get(node);
+			// not necessary yet for sake of readability
+			if (node.random != null) {
+				cpyNode.random = map.get(node.random);
 			}
 		}
-		printRandomList(head);
-		RandomListNode cp = copyRandomList(head);
-		printRandomList(cp);
+
+		return dummy.next;
 	}
 
 	/**
@@ -4889,28 +4845,28 @@ public class Solution {
 	 */
 
 	public ListNode partition(ListNode head, int x) {
-		if (head == null || head.next == null) {
-			return head;
-		}
 		ListNode dummy = new ListNode(0);
 		dummy.next = head;
-		ListNode lt = dummy;
-		while (lt.next != null && lt.next.val < x) {
-			lt = lt.next;
+		ListNode back = dummy;
+
+		while (back.next != null && back.next.val < x) {
+			back = back.next;
 		}
-		ListNode ptr = lt.next, bptr = lt;
-		while (ptr != null) {
-			if (ptr.val < x) {
-				bptr.next = ptr.next;
-				ptr.next = lt.next;
-				lt.next = ptr;
-				lt = lt.next;
-				ptr = bptr.next;
+
+		ListNode fptr = back.next, bptr = back;
+		while (fptr != null) {
+			if (fptr.val < x) {
+				bptr.next = fptr.next;
+				fptr.next = back.next;
+				back.next = fptr;
+				back = back.next;
+				fptr = bptr.next;
 			} else {
-				ptr = ptr.next;
+				fptr = fptr.next;
 				bptr = bptr.next;
 			}
 		}
+
 		return dummy.next;
 	}
 
@@ -5512,41 +5468,35 @@ public class Solution {
 	 */
 
 	public ListNode reverseBetween(ListNode head, int m, int n) {
-		if (head == null || head.next == null) {
+		int num = n - m;
+		if (num == 0) {
 			return head;
 		}
-		ListNode dummy = new ListNode(-1);
+
+		ListNode dummy = new ListNode(0);
 		dummy.next = head;
-		ListNode bp = dummy, fp = head, pos = head;
-		for (int i = 1; i < m; i++) {
+		ListNode front = dummy;
+		while (n > 0) {
+			front = front.next;
+			n--;
+		}
+
+		ListNode fp = dummy.next, bp = dummy;
+		while (m > 1) {
 			fp = fp.next;
 			bp = bp.next;
+			m--;
 		}
-		for (int i = 1; i < n; i++) {
-			pos = pos.next;
-		}
-		for (int i = 0; i < n - m; i++) {
-			bp.next = fp.next;
-			fp.next = pos.next;
-			pos.next = fp;
-			fp = bp.next;
-		}
-		head = dummy.next;
-		dummy.next = null;
-		return head;
-	}
 
-	@Test
-	public void testReverseBetween() {
-		ListNode head = new ListNode(0), ptr = head;
-		for (int i = 1; i < 5; i++) {
-			ListNode newNode = new ListNode(i);
-			ptr.next = newNode;
-			ptr = ptr.next;
+		while (num > 0) {
+			bp.next = fp.next;
+			fp.next = front.next;
+			front.next = fp;
+			fp = bp.next;
+			num--;
 		}
-		printLinkedList(head);
-		head = reverseBetween(head, 1, 5);
-		printLinkedList(head);
+
+		return dummy.next;
 	}
 
 	/**
@@ -5582,40 +5532,6 @@ public class Solution {
 		root.right = buildTree(preorder, preS + mid - inS + 1, preE, inorder,
 				mid + 1, inE, m);
 		return root;
-	}
-
-	/**
-	 * $(Remove Duplicates from Sorted List II)
-	 * 
-	 * Given a sorted linked list, delete all nodes that have duplicate numbers,
-	 * leaving only distinct numbers from the original list.
-	 * 
-	 * For example, Given 1->2->3->3->4->4->5, return 1->2->5. Given
-	 * 1->1->1->2->3, return 2->3.
-	 */
-
-	public ListNode deleteDuplicatesII(ListNode head) {
-		if (head == null || head.next == null) {
-			return head;
-		}
-		ListNode dummy = new ListNode(0);
-		dummy.next = head;
-		ListNode bp = dummy, fp = head;
-		int curr = fp.val;
-		while (fp != null && fp.next != null) {
-			if (fp.next.val == fp.val) {
-				curr = fp.val;
-				while (fp != null && fp.val == curr) {
-					bp.next = fp.next;
-					fp = bp.next;
-				}
-			} else {
-				fp = fp.next;
-				bp = bp.next;
-			}
-		}
-		head = dummy.next;
-		return head;
 	}
 
 	/**
