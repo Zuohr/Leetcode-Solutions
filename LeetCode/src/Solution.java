@@ -5698,39 +5698,29 @@ public class Solution {
 	 */
 
 	public ListNode reverseKGroup(ListNode head, int k) {
-		if (head == null || head.next == null || k == 1) {
-			return head;
-		}
-		ListNode ptr = head;
-		int count = 0;
-		while (ptr != null) {
-			count++;
-			ptr = ptr.next;
-		}
-		count /= k;
-		ListNode dummy = new ListNode(0);
+		ListNode dummy = new ListNode(0), ptr = head, bptr = dummy, fptr = head;
 		dummy.next = head;
-		ListNode bp = dummy, fp = head;
-		ptr = fp;
-		for (int i = 0; i < count; i++) {
-			for (int j = 1; j < k; j++) {
+		while (true) {
+			for (int i = 1; i < k && ptr != null; i++) {
 				ptr = ptr.next;
 			}
-			for (int j = 1; j < k; j++) {
-				bp.next = fp.next;
-				fp.next = ptr.next;
-				ptr.next = fp;
-				fp = bp.next;
+			if (ptr == null) {
+				break;
 			}
-			for (int j = 1; j < k; j++) {
+			for (int i = 1; i < k; i++) {
+				bptr.next = fptr.next;
+				fptr.next = ptr.next;
+				ptr.next = fptr;
+				fptr = bptr.next;
+			}
+			for (int i = 0; i < k; i++) {
 				ptr = ptr.next;
+				fptr = fptr.next;
+				bptr = bptr.next;
 			}
-			bp = ptr;
-			fp = bp.next;
-			ptr = fp;
 		}
-		head = dummy.next;
-		return head;
+
+		return dummy.next;
 	}
 
 	/**
@@ -6214,88 +6204,35 @@ public class Solution {
 	 */
 
 	public ListNode mergeKLists(ArrayList<ListNode> lists) {
-		if (lists == null || lists.size() == 0) {
+		if (lists == null) {
 			return null;
 		}
 
 		PriorityQueue<ListNode> pq = new PriorityQueue<ListNode>(100,
-				new CmpListNode());
-		for (int i = 0; i < lists.size(); i++) {
-			ListNode head = lists.get(i);
+				new ListNodeCmp());
+		for (ListNode head : lists) {
 			if (head != null) {
 				pq.add(head);
 			}
 		}
 
-		ListNode dummy = new ListNode(0);
-		dummy.next = null;
-		ListNode ptr = dummy;
+		ListNode dummy = new ListNode(0), ptr = dummy;
 		while (!pq.isEmpty()) {
-			ListNode curr = pq.poll();
-			if (curr.next != null) {
-				pq.add(curr.next);
+			ListNode head = pq.remove();
+			ptr.next = head;
+			ptr = ptr.next;
+			if (head.next != null) {
+				pq.add(head.next);
 			}
-			ptr.next = curr;
-			curr.next = null;
-			ptr = curr;
 		}
 
-		ListNode head = dummy.next;
-		return head;
+		return dummy.next;
 	}
 
-	class CmpListNode implements Comparator<ListNode> {
-		public int compare(ListNode n1, ListNode n2) {
-			return Integer.valueOf(n1.val).compareTo(Integer.valueOf(n2.val));
+	class ListNodeCmp implements Comparator<ListNode> {
+		public int compare(ListNode node1, ListNode node2) {
+			return node1.val - node2.val;
 		}
-	}
-
-	@Test
-	public void testMergerLists() {
-		ArrayList<ListNode> lists = new ArrayList<Solution.ListNode>();
-		ListNode head = new ListNode(0);
-		ListNode ptr = head;
-		for (int n = 1; n < 5; n++) {
-			ListNode newNode = new ListNode(n);
-			ptr.next = newNode;
-			ptr = ptr.next;
-		}
-		lists.add(head);
-		lists.add(null);
-		lists.add(null);
-		lists.add(null);
-		head = new ListNode(2);
-		ptr = head;
-		for (int i = 3; i < 6; i++) {
-			ListNode newNode = new ListNode(i);
-			ptr.next = newNode;
-			ptr = ptr.next;
-		}
-		lists.add(head);
-
-		head = new ListNode(-10);
-		ptr = head;
-		for (int i = -9; i <= 10; i++) {
-			ListNode newNode = new ListNode(i);
-			ptr.next = newNode;
-			ptr = ptr.next;
-		}
-		lists.add(head);
-
-		for (ListNode h : lists) {
-			while (h != null) {
-				System.out.print(h.val + " -> ");
-				h = h.next;
-			}
-			System.out.println("null");
-		}
-
-		ListNode mh = mergeKLists(lists);
-		while (mh != null) {
-			System.out.print(mh.val + " -> ");
-			mh = mh.next;
-		}
-		System.out.println("null");
 	}
 
 	/**
@@ -6785,78 +6722,55 @@ public class Solution {
 	 * Sort a linked list in O(n log n) time using constant space complexity.
 	 */
 
+	/*
+	 * break the whole list into lists of length 1, merge every two
+	 * of them, repeat until there is only one list left.
+	 */
 	public ListNode sortList(ListNode head) {
-		if (head == null || head.next == null) {
-			return head;
+		ListNode bptr = null, fptr = head;
+		Queue<ListNode> src = new LinkedList<ListNode>(), dst = new LinkedList<ListNode>();
+		while (fptr != null) {
+			src.add(fptr);
+			bptr = fptr;
+			fptr = fptr.next;
+			bptr.next = null;
 		}
 
-		int incr = 1;
-		ListNode dummy = new ListNode(0);
-		dummy.next = head;
-		int size = 0;
-		while (head != null) {
-			size++;
-			head = head.next;
-		}
-		head = dummy.next;
-		while (incr <= size) {
-			ListNode cut1 = dummy, cut2 = null;
-			do {
-				ListNode bp = cut1, fp = bp.next;
-				int count = 0;
-				for (int i = 0; i < incr * 2 && fp != null; i++) {
-					bp = fp;
-					fp = fp.next;
-					count++;
-				}
-				ListNode l1 = cut1.next;
-				cut1.next = null;
-				bp.next = null;
-				cut2 = fp;
+		while (src.size() > 1) {
+			while (!src.isEmpty()) {
+				ListNode list1 = src.poll(), list2 = src.poll();
+				dst.add(mergeLists(list1, list2));
+			}
 
-				ListNode l2;
-				if (count <= incr) {
-					l2 = null;
-				} else {
-					ListNode p = l1;
-					for (int i = 1; i < incr; i++) {
-						p = p.next;
-					}
-					l2 = p.next;
-					p.next = null;
-				}
-
-				cut1 = mergeLists(l1, l2);
-				while (cut1.next != null) {
-					cut1 = cut1.next;
-				}
-				cut1.next = cut2;
-			} while (cut2 != null);
-			incr <<= 1;
+			Queue<ListNode> tmp = src;
+			src = dst;
+			dst = tmp;
 		}
 
-		return dummy.next;
+		return src.poll();
 	}
 
 	private ListNode mergeLists(ListNode l1, ListNode l2) {
-		ListNode head = new ListNode(0), p = head;
+		ListNode dummy = new ListNode(0), ptr = dummy;
 		while (l1 != null && l2 != null) {
-			if (l1.val <= l2.val) {
-				p.next = l1;
+			if (l1.val < l2.val) {
+				ptr.next = l1;
 				l1 = l1.next;
 			} else {
-				p.next = l2;
+				ptr.next = l2;
 				l2 = l2.next;
 			}
-			p = p.next;
+			ptr = ptr.next;
 		}
-		if (l1 != null) {
-			p.next = l1;
+
+		if (l1 == null) {
+			ptr.next = l2;
 		}
-		if (l2 != null) {
-			p.next = l2;
+		if (l2 == null) {
+			ptr.next = l1;
 		}
-		return head.next;
+
+		return dummy.next;
 	}
 
 	/**
