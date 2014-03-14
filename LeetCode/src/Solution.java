@@ -619,18 +619,12 @@ public class Solution {
 			}
 		}
 
-		for (int row = 1; row < ht - 1; row++) {
-			for (int col = 1; col < wd - 1; col++) {
-				if (board[row][col] == 'O') {
-					board[row][col] = 'X';
-				}
-			}
-		}
-
 		for (int row = 0; row < ht; row++) {
 			for (int col = 0; col < wd; col++) {
 				if (board[row][col] == 'N') {
 					board[row][col] = 'O';
+				} else if (board[row][col] == 'O') {
+					board[row][col] = 'X';
 				}
 			}
 		}
@@ -2243,26 +2237,80 @@ public class Solution {
 		}
 	};
 
+	/*
+	 * use a hashmap old node -> new node
+	 */
 	public RandomListNode copyRandomList(RandomListNode head) {
-		RandomListNode ptr = head, dummy = new RandomListNode(0), ptrcpy = dummy;
+		RandomListNode dummy = new RandomListNode(0), cpyptr = dummy, ptr = head;
 		Map<RandomListNode, RandomListNode> map = new HashMap<RandomListNode, RandomListNode>();
+
 		while (ptr != null) {
 			RandomListNode newNode = new RandomListNode(ptr.label);
 			map.put(ptr, newNode);
-			ptrcpy.next = newNode;
-			ptrcpy = ptrcpy.next;
+			cpyptr.next = newNode;
+			cpyptr = cpyptr.next;
 			ptr = ptr.next;
 		}
 
 		for (RandomListNode node : map.keySet()) {
-			RandomListNode cpyNode = map.get(node);
-			// not necessary yet for sake of readability
-			if (node.random != null) {
-				cpyNode.random = map.get(node.random);
-			}
+			map.get(node).random = map.get(node.random);
 		}
 
 		return dummy.next;
+	}
+
+	/*
+	 * without hashmap
+	 */
+	public RandomListNode copyRandomList2(RandomListNode head) {
+		if (head == null) {
+			return null;
+		}
+
+		copyNext(head);
+		copyRandom(head);
+		return split(head);
+	}
+
+	private void copyNext(RandomListNode head) {
+		RandomListNode ptr = head;
+		while (ptr != null) {
+			RandomListNode newNode = new RandomListNode(ptr.label);
+			newNode.next = ptr.next;
+			ptr.next = newNode;
+			ptr = ptr.next.next;
+		}
+	}
+
+	private void copyRandom(RandomListNode head) {
+		RandomListNode ptr = head;
+		while (ptr != null) {
+			if (ptr.random != null) {
+				ptr.next.random = ptr.random.next;
+			} else {
+				ptr.next.random = null;
+			}
+			ptr = ptr.next.next;
+		}
+	}
+
+	private RandomListNode split(RandomListNode head) {
+		if (head == null) {
+			return null;
+		}
+		RandomListNode newHead = head.next, ptr = head, cpyptr = newHead;
+		while (ptr != null) {
+			ptr.next = cpyptr.next;
+			ptr = ptr.next;
+			if (cpyptr.next != null) {
+				cpyptr.next = cpyptr.next.next;
+			} else {
+				cpyptr.next = null;
+			}
+			cpyptr = cpyptr.next;
+		}
+
+		return newHead;
 	}
 
 	/**
@@ -6723,23 +6771,24 @@ public class Solution {
 	 */
 
 	/*
-	 * break the whole list into lists of length 1, merge every two
-	 * of them, repeat until there is only one list left.
+	 * break the whole list into lists of length 1, merge every two of them,
+	 * repeat until there is only one list left.
 	 */
 	public ListNode sortList(ListNode head) {
-		ListNode bptr = null, fptr = head;
+		ListNode dummy = new ListNode(0), ptr = head;
+		dummy.next = head;
 		Queue<ListNode> src = new LinkedList<ListNode>(), dst = new LinkedList<ListNode>();
-		while (fptr != null) {
-			src.add(fptr);
-			bptr = fptr;
-			fptr = fptr.next;
-			bptr.next = null;
+		while (ptr != null) {
+			dummy.next = ptr.next;
+			ptr.next = null;
+			src.offer(ptr);
+			ptr = dummy.next;
 		}
 
 		while (src.size() > 1) {
 			while (!src.isEmpty()) {
 				ListNode list1 = src.poll(), list2 = src.poll();
-				dst.add(mergeLists(list1, list2));
+				dst.offer(mergeLists(list1, list2));
 			}
 
 			Queue<ListNode> tmp = src;
@@ -6762,7 +6811,6 @@ public class Solution {
 			}
 			ptr = ptr.next;
 		}
-
 		if (l1 == null) {
 			ptr.next = l2;
 		}
