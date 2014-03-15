@@ -273,15 +273,15 @@ public class Solution {
 	 */
 
 	public int numTrees(int n) {
-		int[] valArr = new int[n + 1];
-		valArr[0] = 1;
+		int[] dp = new int[n + 1];
+		dp[0] = 1;
 		for (int i = 1; i <= n; i++) {
 			for (int j = 0; j < i; j++) {
-				valArr[i] += valArr[j] * valArr[i - 1 - j];
+				dp[i] += dp[j] * dp[i - 1 - j];
 			}
 		}
 
-		return valArr[n];
+		return dp[n];
 	}
 
 	/**
@@ -1003,6 +1003,35 @@ public class Solution {
 	}
 
 	/**
+	 * $(Binary Tree Preorder Traversal )
+	 * 
+	 * Given a binary tree, return the preorder traversal of its nodes' values.
+	 * 
+	 * Note: Recursive solution is trivial, could you do it iteratively?
+	 */
+
+	public ArrayList<Integer> preorderTraversal(TreeNode root) {
+		ArrayList<Integer> result = new ArrayList<Integer>();
+		Stack<TreeNode> stack = new Stack<TreeNode>();
+		TreeNode curr = root;
+		boolean stop = false;
+		while (!stop) {
+			if (curr != null) {
+				result.add(curr.val);
+				stack.push(curr);
+				curr = curr.left;
+			} else {
+				if (!stack.isEmpty()) {
+					curr = stack.pop().right;
+				} else {
+					stop = true;
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * $(Binary Tree Inorder Traversal)
 	 * 
 	 * Given a binary tree, return the inorder traversal of its nodes' values.
@@ -1027,18 +1056,18 @@ public class Solution {
 
 	public ArrayList<Integer> inorderTraversalIterative(TreeNode root) {
 		ArrayList<Integer> result = new ArrayList<Integer>();
-		Stack<TreeNode> s = new Stack<TreeNode>();
+		Stack<TreeNode> stack = new Stack<TreeNode>();
 		TreeNode curr = root;
 		boolean stop = false;
 		while (!stop) {
 			if (curr != null) {
-				s.push(curr);
+				stack.push(curr);
 				curr = curr.left;
 			} else {
-				if (s.isEmpty()) {
+				if (stack.isEmpty()) {
 					stop = true;
 				} else {
-					curr = s.pop();
+					curr = stack.pop();
 					result.add(curr.val);
 					curr = curr.right;
 				}
@@ -2311,35 +2340,6 @@ public class Solution {
 		}
 
 		return newHead;
-	}
-
-	/**
-	 * $(Binary Tree Preorder Traversal )
-	 * 
-	 * Given a binary tree, return the preorder traversal of its nodes' values.
-	 * 
-	 * Note: Recursive solution is trivial, could you do it iteratively?
-	 */
-
-	public ArrayList<Integer> preorderTraversal(TreeNode root) {
-		ArrayList<Integer> result = new ArrayList<Integer>();
-		Stack<TreeNode> s = new Stack<TreeNode>();
-		TreeNode curr = root;
-		boolean stop = false;
-		while (!stop) {
-			if (curr != null) {
-				s.push(curr);
-				result.add(curr.val);
-				curr = curr.left;
-			} else {
-				if (!s.isEmpty()) {
-					curr = s.pop().right;
-				} else {
-					stop = true;
-				}
-			}
-		}
-		return result;
 	}
 
 	/**
@@ -4926,52 +4926,29 @@ public class Solution {
 	 */
 
 	public ArrayList<TreeNode> generateTrees(int n) {
-		ArrayList<TreeNode> result = new ArrayList<TreeNode>();
-		if (n == 0) {
-			result.add(null);
-		} else {
-			int[] arr = new int[n];
-			for (int i = 0; i < n; i++) {
-				arr[i] = i + 1;
-			}
-			generateTree(result, arr, 0, n - 1);
-		}
-		return result;
+		return generateTrees(1, n);
 	}
 
-	private void generateTree(ArrayList<TreeNode> result, int[] arr, int start,
-			int end) {
+	private ArrayList<TreeNode> generateTrees(int start, int end) {
+		ArrayList<TreeNode> result = new ArrayList<TreeNode>();
+		if (start > end) {
+			result.add(null);
+			return result;
+		}
+
 		for (int i = start; i <= end; i++) {
-			ArrayList<TreeNode> left = new ArrayList<TreeNode>();
-			generateTree(left, arr, start, i - 1);
-			ArrayList<TreeNode> right = new ArrayList<TreeNode>();
-			generateTree(right, arr, i + 1, end);
-			if (left.isEmpty() && right.isEmpty()) {
-				TreeNode root = new TreeNode(arr[i]);
-				result.add(root);
-			} else if (left.isEmpty() && !right.isEmpty()) {
-				for (TreeNode r : right) {
-					TreeNode root = new TreeNode(arr[i]);
-					root.right = r;
-					result.add(root);
-				}
-			} else if (right.isEmpty() && !left.isEmpty()) {
-				for (TreeNode l : left) {
-					TreeNode root = new TreeNode(arr[i]);
-					root.left = l;
-					result.add(root);
-				}
-			} else {
-				for (TreeNode l : left) {
-					for (TreeNode r : right) {
-						TreeNode root = new TreeNode(arr[i]);
-						root.left = l;
-						root.right = r;
-						result.add(root);
-					}
+			ArrayList<TreeNode> leftTrees = generateTrees(start, i - 1);
+			ArrayList<TreeNode> rightTrees = generateTrees(i + 1, end);
+			for (TreeNode left : leftTrees) {
+				for (TreeNode right : rightTrees) {
+					TreeNode newRoot = new TreeNode(i);
+					newRoot.left = left;
+					newRoot.right = right;
+					result.add(newRoot);
 				}
 			}
 		}
+		return result;
 	}
 
 	/**
@@ -6002,6 +5979,9 @@ public class Solution {
 	 * devise a constant space solution?
 	 */
 
+	/*
+	 * O(n) space
+	 */
 	public void recoverTree(TreeNode root) {
 		if (root == null || root.left == null && root.right == null) {
 			return;
@@ -6038,6 +6018,47 @@ public class Solution {
 			if (arr.get(i).val < arr.get(i - 1).val) {
 				right = arr.get(i);
 				break;
+			}
+		}
+
+		left.val ^= right.val;
+		right.val ^= left.val;
+		left.val ^= right.val;
+	}
+
+	/*
+	 * O(1) space
+	 */
+	public void recoverTree2(TreeNode root) {
+		if (root == null || root.left == null && root.right == null) {
+			return;
+		}
+
+		TreeNode left = null, right = null, last = null, curr = root;
+		Stack<TreeNode> stack = new Stack<TreeNode>();
+		boolean stop = false;
+		while (!stop) {
+			if (curr != null) {
+				stack.push(curr);
+				curr = curr.left;
+			} else {
+				if (!stack.isEmpty()) {
+					curr = stack.pop();
+					if (last != null) {
+						if (last.val > curr.val) {
+							if (left == null) {
+								left = last;
+								right = curr;
+							} else {
+								right = curr;
+							}
+						}
+					}
+					last = curr;
+					curr = curr.right;
+				} else {
+					stop = true;
+				}
 			}
 		}
 
@@ -6660,25 +6681,20 @@ public class Solution {
 	 */
 
 	public int maxPathSum(TreeNode root) {
-		if (root == null) {
-			return 0;
-		}
-
 		int[] max = { Integer.MIN_VALUE };
 		maxPathSumDFS(root, max);
 		return max[0];
 	}
 
-	private int maxPathSumDFS(TreeNode root, int[] max) {
+	public int maxPathSumDFS(TreeNode root, int[] max) {
 		if (root == null) {
 			return 0;
 		}
 
-		int left = maxPathSumDFS(root.left, max);
-		int right = maxPathSumDFS(root.right, max);
-		int currMax = Math.max(Math.max(root.val + left, root.val + right),
-				root.val);
-		max[0] = Math.max(max[0], Math.max(root.val + left + right, currMax));
+		int left = maxPathSumDFS(root.left, max), right = maxPathSumDFS(
+				root.right, max);
+		int currMax = Math.max(Math.max(left, right), 0) + root.val;
+		max[0] = Math.max(max[0], Math.max(currMax, left + right + root.val));
 		return currMax;
 	}
 
