@@ -2398,60 +2398,6 @@ public class Solution {
 	}
 
 	/**
-	 * $(Construct Binary Tree from Inorder and Postorder Traversal)
-	 * 
-	 * Given inorder and postorder traversal of a tree, construct the binary
-	 * tree.
-	 * 
-	 * Note: You may assume that duplicates do not exist in the tree.
-	 */
-
-	public TreeNode buildTree2(int[] inorder, int[] postorder) {
-		if (postorder == null || postorder.length == 0) {
-			return null;
-		}
-
-		return buildTree2(inorder, 0, inorder.length - 1, postorder, 0,
-				postorder.length - 1);
-	}
-
-	private TreeNode buildTree2(int[] inorder, int ioStart, int ioEnd,
-			int[] postorder, int poStart, int poEnd) {
-		if (ioStart > ioEnd) {
-			return null;
-		}
-		int rootVal = postorder[poEnd];
-		TreeNode newNode = new TreeNode(rootVal);
-		int index = 0;
-		while (inorder[index] != rootVal) {
-			index++;
-		}
-		newNode.left = buildTree2(inorder, ioStart, index - 1, postorder,
-				poStart, poStart + index - ioStart - 1);
-		newNode.right = buildTree2(inorder, index + 1, ioEnd, postorder,
-				poStart + index - ioStart, poEnd - 1);
-		return newNode;
-	}
-
-	@Test
-	public void testBuildTree() {
-		TreeNode root = new TreeNode(1);
-		root.left = new TreeNode(2);
-		ArrayList<Integer> inorderArr = inorderTraversalRecursive(root);
-		System.out.println(inorderArr);
-		ArrayList<Integer> postorderArr = postorderTraversal(root);
-		System.out.println(postorderArr);
-		int[] inorder = new int[inorderArr.size()];
-		int[] postorder = new int[postorderArr.size()];
-		for (int i = 0; i < inorderArr.size(); i++) {
-			inorder[i] = inorderArr.get(i);
-			postorder[i] = postorderArr.get(i);
-		}
-		TreeNode rootDup = buildTree2(inorder, postorder);
-		System.out.println(isSameTree(root, rootDup));
-	}
-
-	/**
 	 * $(Binary Tree Postorder Traversal)
 	 * 
 	 * Given a binary tree, return the postorder traversal of its nodes' values.
@@ -4846,37 +4792,39 @@ public class Solution {
 
 	public ArrayList<ArrayList<Integer>> zigzagLevelOrder(TreeNode root) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (root != null) {
-			boolean reverse = true;
-			Stack<TreeNode> last = new Stack<TreeNode>();
-			last.add(root);
-			while (!last.isEmpty()) {
-				ArrayList<Integer> row = new ArrayList<Integer>();
-				Stack<TreeNode> curr = new Stack<TreeNode>();
-				while (!last.isEmpty()) {
-					TreeNode node = last.pop();
-					row.add(node.val);
-					if (reverse) {
-						if (node.left != null) {
-							curr.push(node.left);
-						}
-						if (node.right != null) {
-							curr.push(node.right);
-						}
-					} else {
-						if (node.right != null) {
-							curr.push(node.right);
-						}
-						if (node.left != null) {
-							curr.push(node.left);
-						}
-					}
-				}
-				result.add(row);
-				last = curr;
-				reverse = !reverse;
-			}
+		if (root == null) {
+			return result;
 		}
+
+		ArrayList<TreeNode> src = new ArrayList<TreeNode>();
+		src.add(root);
+		boolean reverse = false;
+		while (!src.isEmpty()) {
+			ArrayList<TreeNode> dst = new ArrayList<TreeNode>();
+			ArrayList<Integer> curr = new ArrayList<Integer>();
+			if (reverse) {
+				for (int i = src.size() - 1; i >= 0; i--) {
+					curr.add(src.get(i).val);
+				}
+			} else {
+				for (int i = 0; i < src.size(); i++) {
+					curr.add(src.get(i).val);
+				}
+			}
+			result.add(curr);
+			reverse = !reverse;
+
+			for (TreeNode node : src) {
+				if (node.left != null) {
+					dst.add(node.left);
+				}
+				if (node.right != null) {
+					dst.add(node.right);
+				}
+			}
+			src = dst;
+		}
+
 		return result;
 	}
 
@@ -5534,28 +5482,69 @@ public class Solution {
 	 */
 
 	public TreeNode buildTree(int[] preorder, int[] inorder) {
-		if (preorder == null || preorder.length == 0) {
+		if (preorder == null || inorder == null
+				|| preorder.length != inorder.length) {
 			return null;
 		}
-		HashMap<Integer, Integer> m = new HashMap<Integer, Integer>();
+		Map<Integer, Integer> positions = new HashMap<Integer, Integer>();
 		for (int i = 0; i < inorder.length; i++) {
-			m.put(inorder[i], i);
+			positions.put(inorder[i], i);
 		}
-		return buildTree(preorder, 0, preorder.length - 1, inorder, 0,
-				inorder.length - 1, m);
+
+		return buildTree(preorder, inorder, 0, preorder.length - 1, 0,
+				inorder.length - 1, positions);
 	}
 
-	private TreeNode buildTree(int[] preorder, int preS, int preE,
-			int[] inorder, int inS, int inE, HashMap<Integer, Integer> m) {
-		if (inS > inE) {
+	private TreeNode buildTree(int[] preorder, int[] inorder, int preStart,
+			int preEnd, int inStart, int inEnd, Map<Integer, Integer> positions) {
+		if (inStart > inEnd) {
 			return null;
 		}
-		TreeNode root = new TreeNode(preorder[preS]);
-		int mid = m.get(preorder[preS]);
-		root.left = buildTree(preorder, preS + 1, preS + mid - inS, inorder,
-				inS, mid - 1, m);
-		root.right = buildTree(preorder, preS + mid - inS + 1, preE, inorder,
-				mid + 1, inE, m);
+
+		TreeNode root = new TreeNode(preorder[preStart]);
+		int i = positions.get(root.val);
+		root.left = buildTree(preorder, inorder, preStart + 1, preStart + i
+				- inStart, inStart, i - 1, positions);
+		root.right = buildTree(preorder, inorder, preStart + i - inStart + 1,
+				preEnd, i + 1, inEnd, positions);
+		return root;
+	}
+
+	/**
+	 * $(Construct Binary Tree from Inorder and Postorder Traversal)
+	 * 
+	 * Given inorder and postorder traversal of a tree, construct the binary
+	 * tree.
+	 * 
+	 * Note: You may assume that duplicates do not exist in the tree.
+	 */
+
+	public TreeNode buildTree2(int[] inorder, int[] postorder) {
+		if (inorder == null || postorder == null
+				|| inorder.length != postorder.length) {
+			return null;
+		}
+
+		Map<Integer, Integer> positions = new HashMap<Integer, Integer>();
+		for (int i = 0; i < inorder.length; i++) {
+			positions.put(inorder[i], i);
+		}
+		return buildTree2(inorder, 0, inorder.length - 1, postorder, 0,
+				postorder.length - 1, positions);
+	}
+
+	private TreeNode buildTree2(int[] inorder, int inStart, int inEnd,
+			int[] postorder, int pStart, int pEnd,
+			Map<Integer, Integer> positions) {
+		if (inStart > inEnd) {
+			return null;
+		}
+		TreeNode root = new TreeNode(postorder[pEnd]);
+		int i = positions.get(root.val);
+		root.left = buildTree2(inorder, inStart, i - 1, postorder, pStart,
+				pStart + i - inStart - 1, positions);
+		root.right = buildTree2(inorder, i + 1, inEnd, postorder, pStart + i
+				- inStart, pEnd - 1, positions);
 		return root;
 	}
 
