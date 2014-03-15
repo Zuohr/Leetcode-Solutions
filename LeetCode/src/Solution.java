@@ -6062,9 +6062,11 @@ public class Solution {
 			}
 		}
 
-		left.val ^= right.val;
-		right.val ^= left.val;
-		left.val ^= right.val;
+		if (left != null && right != null) {
+			left.val ^= right.val;
+			right.val ^= left.val;
+			left.val ^= right.val;
+		}
 	}
 
 	/**
