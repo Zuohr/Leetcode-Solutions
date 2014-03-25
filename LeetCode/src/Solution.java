@@ -2407,64 +2407,34 @@ public class Solution {
 
 	public ArrayList<Integer> postorderTraversal(TreeNode root) {
 		ArrayList<Integer> result = new ArrayList<Integer>();
-		if (root != null) {
-			TreeNode prev = null, curr = root;
-			Stack<TreeNode> s = new Stack<TreeNode>();
-			boolean done = false;
-			while (!done) {
-				if (curr != null) {
-					s.push(curr);
-					prev = curr;
-					curr = curr.left;
-				} else {
-					if (!s.isEmpty()) {
-						curr = s.pop();
-						if (curr.right == null) {
-							result.add(curr.val);
-							prev = curr;
-							curr = null;
-						} else {
-							if (prev == curr.right) {
-								result.add(curr.val);
-								prev = curr;
-								curr = null;
-							} else {
-								s.push(curr);
-								prev = curr;
-								curr = curr.right;
-							}
-						}
+		TreeNode curr = root, prev = null;
+		Stack<TreeNode> stack = new Stack<TreeNode>();
+		boolean stop = false;
+
+		while (!stop) {
+			if (curr != null) {
+				stack.push(curr);
+				prev = curr;
+				curr = curr.left;
+			} else {
+				if (!stack.isEmpty()) {
+					curr = stack.pop();
+					if (curr.right == null || prev == curr.right) {
+						result.add(curr.val);
+						prev = curr;
+						curr = null;
 					} else {
-						done = true;
+						stack.push(curr);
+						prev = curr;
+						curr = curr.right;
 					}
+				} else {
+					stop = true;
 				}
 			}
 		}
 
 		return result;
-	}
-
-	@Test
-	public void testPostOrderTraversal() {
-		int len = 10;
-		int[] arr = new int[len];
-		for (int i = 0; i < len; i++) {
-			arr[i] = i;
-		}
-		TreeNode root = sortedArrayToBST(arr);
-		printBST(root);
-		ArrayList<Integer> result = postorderTraversal(root);
-		System.out.println(result);
-
-		root = new TreeNode(0);
-		TreeNode ptr = root;
-		for (int i = 1; i < 10; i++) {
-			ptr.right = new TreeNode(i);
-			ptr = ptr.right;
-		}
-		printBST(root);
-		result = postorderTraversal(root);
-		System.out.println(result);
 	}
 
 	/**
@@ -3758,17 +3728,17 @@ public class Solution {
 	 */
 	public int canCompleteCircuit(int[] gas, int[] cost) {
 		int len = gas.length;
-		int start = 0, end = (start + 1) % len, due = gas[0] - cost[0];
+		int start = 0, end = (start + 1) % len, curr = gas[0] - cost[0];
 		while (start != end) {
-			if (due >= 0) {
-				due += gas[end] - cost[end];
+			if (curr >= 0) {
+				curr += gas[end] - cost[end];
 				end = (end + 1) % len;
 			} else {
 				start = (start + len - 1) % len;
-				due += gas[start] - cost[start];
+				curr += gas[start] - cost[start];
 			}
 		}
-		if (due >= 0) {
+		if (curr >= 0) {
 			return start;
 		} else {
 			return -1;
@@ -3841,52 +3811,31 @@ public class Solution {
 		if (num == null) {
 			return 0;
 		}
-		int len = num.length;
-		if (len == 0) {
-			return 0;
-		}
-		if (len == 1) {
-			return 1;
-		}
-		int max = 1;
-		HashMap<Integer, Integer> m = new HashMap<Integer, Integer>();
-		HashMap<Integer, Integer> md = new HashMap<Integer, Integer>();
-		for (int i = 0; i < len; i++) {
-			Integer curr = num[i];
-			if (!md.containsKey(curr)) {
-				Integer seq = m.get(curr + 1);
-				if (seq != null) {
-					m.put(curr, seq + 1);
-					m.remove(curr + 1);
-				} else {
-					m.put(curr, 1);
-				}
-				md.put(curr, 1);
-			}
-		}
-		for (Integer i : num) {
-			Integer curr = m.get(i);
-			if (curr == null) {
-				continue;
-			} else {
-				int incr = m.get(i);
-				while (true) {
-					Integer seq = m.get(i + incr);
-					if (seq == null) {
-						break;
-					}
-					m.put(i, m.get(i) + seq);
-					m.remove(i + incr);
-					incr = m.get(i);
-				}
-				int count = m.get(i);
-				if (count > max) {
-					max = count;
-				}
-			}
+
+		Set<Integer> set = new HashSet<Integer>();
+		for (int n : num) {
+			set.add(n);
 		}
 
-		return max;
+		int maxLen = 1;
+		for (int n : num) {
+			int left = n - 1, right = n + 1;
+			set.remove(n);
+
+			while (set.contains(left)) {
+				set.remove(left);
+				left--;
+			}
+
+			while (set.contains(right)) {
+				set.remove(right);
+				right++;
+			}
+
+			maxLen = Math.max(right - left - 1, maxLen);
+		}
+
+		return maxLen;
 	}
 
 	/**
