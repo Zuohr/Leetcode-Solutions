@@ -4368,32 +4368,30 @@ public class Solution {
 	 */
 
 	public boolean isPalindrome(String s) {
-		if (s == null || s.length() < 2) {
-			return true;
+		if (s == null) {
+			return false;
 		}
 
-		int len = s.length();
-		int l = 0, r = len - 1;
-		while (true) {
-			while (l < r && !Character.isLetterOrDigit(s.charAt(l))) {
-				l++;
+		char[] chs = s.toCharArray();
+		int back = 0, front = 0;
+		while (front < chs.length) {
+			if (Character.isLetter(chs[front])) {
+				chs[back] = Character.toLowerCase(chs[front]);
+				back++;
+			} else if (Character.isDigit(chs[front])) {
+				chs[back] = chs[front];
+				back++;
 			}
-			while (r > l && !Character.isLetterOrDigit(s.charAt(r))) {
-				r--;
+			front++;
+		}
+
+		int start = 0, end = back - 1;
+		while (start < end) {
+			if (chs[start] != chs[end]) {
+				return false;
 			}
-			if (l >= r) {
-				break;
-			} else {
-				char c = s.charAt(l);
-				char c1 = (Character.isLetter(c) ? Character.toLowerCase(c) : c);
-				c = s.charAt(r);
-				char c2 = (Character.isLetter(c) ? Character.toLowerCase(c) : c);
-				if (c1 != c2) {
-					return false;
-				}
-			}
-			l++;
-			r--;
+			start++;
+			end--;
 		}
 		return true;
 	}
@@ -8488,83 +8486,45 @@ public class Solution {
 	}
 
 	public int maxPoints(Point[] points) {
-		if (points == null) {
+		if (points == null || points.length == 0) {
 			return 0;
 		}
-		int len = points.length;
-		if (len <= 2) {
-			return len;
-		}
 
-		Arrays.sort(points, new cmpPoint());
-		int max = 2;
-		HashMap<Double, HashMap<Double, HashSet<Point>>> m = new HashMap<Double, HashMap<Double, HashSet<Point>>>();
-		for (int i = 0; i < len - 1; i++) {
-			for (int j = i + 1; j < len; j++) {
-				Point p1 = points[i], p2 = points[j];
-				double x1 = (double) p1.x, x2 = (double) p2.x, y1 = (double) p1.y, y2 = (double) p2.y;
-				if (x1 == x2 && y1 == y2) {
-					continue;
-				}
-				Double k, b;
-				if (x1 == x2) {
-					k = null;
-					b = x1;
+		Arrays.sort(points, new PointsCmp());
+		int max = 1;
+		for (int i = 0; i < points.length - 1; i++) {
+			int startCnt = 1;
+			Point p1 = points[i];
+			for (int j = i + 1; j < points.length; j++) {
+				Point p2 = points[j];
+				if (p1.x == p2.x && p1.y == p2.y) {
+					startCnt++;
+					max = Math.max(max, startCnt);
 				} else {
-					k = (y1 - y2) / (x1 - x2);
-					b = y1 - k * x1;
-				}
-				HashMap<Double, HashSet<Point>> sub1 = m.get(k);
-				if (sub1 == null) {
-					HashSet<Point> newsub2 = new HashSet<Point>();
-					newsub2.add(points[i]);
-					newsub2.add(points[j]);
-					HashMap<Double, HashSet<Point>> newsub1 = new HashMap<Double, HashSet<Point>>();
-					newsub1.put(b, newsub2);
-					m.put(k, newsub1);
-				} else {
-					HashSet<Point> sub2 = sub1.get(b);
-					if (sub2 == null) {
-						HashSet<Point> newsub2 = new HashSet<Point>();
-						newsub2.add(points[i]);
-						newsub2.add(points[j]);
-						sub1.put(b, newsub2);
-					} else {
-						sub2.add(points[i]);
-						sub2.add(points[j]);
-						max = Math.max(max, sub2.size());
+					int endCnt = 1;
+					for (int k = j + 1; k < points.length; k++) {
+						Point p3 = points[k];
+						if ((p3.y - p1.y) * (p2.x - p1.x) == (p2.y - p1.y)
+								* (p3.x - p1.x)) {
+							endCnt++;
+						}
 					}
+					max = Math.max(max, startCnt + endCnt);
 				}
 			}
 		}
-		if (m.isEmpty()) {
-			max = Math.max(max, len);
-		}
+
 		return max;
 	}
 
-	class cmpPoint implements Comparator<Point> {
+	private class PointsCmp implements Comparator<Point> {
 		public int compare(Point p1, Point p2) {
-			if (p1.x > p2.x) {
-				return 1;
-			} else if (p1.x < p2.x) {
-				return -1;
+			if (p1.x != p2.x) {
+				return p1.x - p2.x;
 			} else {
-				return 0;
+				return p1.y - p2.y;
 			}
 		}
-	}
-
-	@Test
-	public void testMaxPoints() {
-		Point[] ps = { /*
-						 * new Point(0, 0), new Point(1, 0), new Point(0, 0),
-						 * new Point(0, 1), new Point(1, 1), new Point(1, 2),
-						 * new Point(1, 3), new Point(1, 4), new Point(1, 5),
-						 * new Point(1, 5)
-						 */new Point(0, 0), new Point(0, 0), new Point(0, 0),
-				new Point(0, 0) };
-		System.out.println(maxPoints(ps));
 	}
 
 	/**
