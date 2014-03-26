@@ -8057,8 +8057,8 @@ public class Solution {
 
 	public boolean isNumberRegExp(String s) {
 		return s != null
-				&& (s.matches("\\s*[+-]?\\d+\\.?(\\d+)?([eE][-+]?\\d+)?\\s*") || s
-						.matches("\\s*[+-]?\\d*\\.\\d+([eE][-+]?\\d+)?\\s*"));
+				&& (s.trim()
+						.matches("[+-]?(\\d+|\\d+\\.(\\d+)?|(\\d+)?\\.\\d+)([eE][+-]?\\d+)?"));
 	}
 
 	public boolean isNumber(String s) {
