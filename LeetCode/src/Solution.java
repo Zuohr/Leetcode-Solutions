@@ -7973,75 +7973,51 @@ public class Solution {
 	 */
 
 	public int atoi(String str) {
-		if (str == null || str.isEmpty()) {
+		if (str == null) {
 			return 0;
 		}
 
-		int len = str.length();
-		int index = 0;
-		while (index < len && Character.isWhitespace(str.charAt(index))) {
-			index++;
-		}
-		if (index == len) {
+		str = str.trim();
+		if (str.isEmpty()) {
 			return 0;
 		}
 
-		boolean negative = false;
-		if (str.charAt(index) == '-') {
-			negative = true;
-			index++;
-		} else if (str.charAt(index) == '+') {
-			index++;
-		} else if (!Character.isDigit(str.charAt(index))) {
+		String sign = "";
+		int start = 0;
+		int maxVal;
+		if (str.charAt(0) == '-') {
+			sign = "-";
+			start = 1;
+			maxVal = Integer.MIN_VALUE;
+		} else if (str.charAt(0) == '+') {
+			start = 1;
+			maxVal = Integer.MAX_VALUE;
+		} else if (Character.isDigit(str.charAt(0))) {
+			maxVal = Integer.MAX_VALUE;
+		} else {
 			return 0;
 		}
-
-		if (index == len || !Character.isDigit(str.charAt(index))) {
+		int i = start;
+		for (; i < str.length(); i++) {
+			if (!Character.isDigit(str.charAt(i))) {
+				break;
+			} else if (i - start + 1 > 10) {
+				return maxVal;
+			}
+		}
+		String num = str.substring(start, i);
+		if (num.isEmpty()) {
 			return 0;
-		}
-
-		StringBuilder sb = new StringBuilder();
-		int cnt = 0;
-		while (index < len && cnt < 10 && Character.isDigit(str.charAt(index))) {
-			sb.append(str.charAt(index));
-			index++;
-			cnt++;
-		}
-		String num = sb.toString();
-		if (negative) {
-			if (index < len
-					&& Character.isDigit(str.charAt(index))
-					|| cnt == 10
-					&& num.compareTo(String.valueOf(Integer.MIN_VALUE)
-							.substring(1)) > 0) {
+		} else {
+			long l = Long.parseLong(sign + num);
+			if (l < Integer.MIN_VALUE) {
 				return Integer.MIN_VALUE;
-			}
-		} else {
-			if (index < len && Character.isDigit(str.charAt(index))
-					|| cnt == 10
-					&& num.compareTo(String.valueOf(Integer.MAX_VALUE)) > 0) {
+			} else if (l > Integer.MAX_VALUE) {
 				return Integer.MAX_VALUE;
+			} else {
+				return Integer.parseInt(sign + num);
 			}
 		}
-
-		long resultLong = Long.parseLong(num);
-		int result = 0;
-		if (negative) {
-			result = (int) (-resultLong);
-		} else {
-			result = (int) resultLong;
-		}
-		return result;
-	}
-
-	@Test
-	public void testAtoi() {
-		String s = "-2147493649";
-		System.out.println(atoi(s));
-		s = String.valueOf(Integer.MAX_VALUE);
-		System.out.println(atoi(s));
-		s = "23abd";
-		System.out.println(atoi(s));
 	}
 
 	/**
@@ -8218,63 +8194,46 @@ public class Solution {
 			return result;
 		}
 
-		int len = words.length;
-		int[] mlen = new int[len];
-		for (int i = 0; i < len; i++) {
-			mlen[i] = words[i].length();
-		}
-
-		int index = 0;
-		while (index < len) {
-			int remain = L - mlen[index], start = index;
-			index++;
-			while (index < len && remain >= mlen[index] + 1) {
-				remain -= mlen[index] + 1;
-				index++;
+		int start = 0, end = 1;
+		boolean stop = false;
+		;
+		while (!stop) {
+			int lenSum = words[start].length(), cnt = 1;
+			while (end < words.length && words[end].length() + lenSum + 1 <= L) {
+				lenSum += words[end].length() + 1;
+				cnt++;
+				end++;
 			}
-			boolean lastLine = (index == len);
-			int numspc = index - start - 1;
-			if (numspc == 0) {
-				StringBuilder sb = new StringBuilder(words[start]);
-				for (int i = 0; i < remain; i++) {
+			int[] spaceLen = new int[cnt];
+			if (end == words.length) {
+				stop = true;
+				Arrays.fill(spaceLen, 1);
+				spaceLen[spaceLen.length - 1] = L - lenSum;
+			} else if (cnt == 1) {
+				spaceLen[0] = L - lenSum;
+			} else {
+				int remain = L - lenSum, space = remain / (cnt - 1) + 1, mod = remain
+						% (cnt - 1);
+				Arrays.fill(spaceLen, space);
+				for (int i = 0; i < mod; i++) {
+					spaceLen[i]++;
+				}
+				spaceLen[spaceLen.length - 1] = 0;
+			}
+			StringBuilder sb = new StringBuilder();
+			for (int i = start; i < end; i++) {
+				sb.append(words[i]);
+				for (int k = 0; k < spaceLen[i - start]; k++) {
 					sb.append(" ");
 				}
-				result.add(sb.toString());
-			} else {
-				int[] lenspc = new int[numspc];
-				if (lastLine) {
-					Arrays.fill(lenspc, 1);
-				} else {
-					int spc = remain + numspc;
-					Arrays.fill(lenspc, spc / numspc);
-					for (int i = 0; i < spc % numspc; i++) {
-						lenspc[i]++;
-					}
-				}
-				StringBuilder sb = new StringBuilder(words[start]);
-				for (int i = 0; i < numspc; i++) {
-					for (int j = 0; j < lenspc[i]; j++) {
-						sb.append(" ");
-					}
-					sb.append(words[start + 1 + i]);
-				}
-				if (lastLine) {
-					int toFill = L - sb.length();
-					for (int i = 0; i < toFill; i++) {
-						sb.append(" ");
-					}
-				}
-				result.add(sb.toString());
 			}
+			result.add(sb.toString());
+
+			start = end;
+			end = start + 1;
 		}
 
 		return result;
-	}
-
-	@Test
-	public void testFullJustify() {
-		String[] words = { "a", "a", "a", "a", "a" };
-		System.out.println(fullJustify(words, 3));
 	}
 
 	/**
@@ -8286,40 +8245,37 @@ public class Solution {
 	 */
 
 	public double findMedianSortedArrays(int A[], int B[]) {
-		int total = A.length + B.length;
-		if ((total & 1) == 1) {
-			return findkth(A, 0, B, 0, total / 2 + 1);
+		int lenA = A.length, lenB = B.length;
+		if (((lenA + lenB) & 1) == 0) {
+			return (findNth(A, 0, B, 0, (lenA + lenB) / 2 + 1) + findNth(A, 0,
+					B, 0, (lenA + lenB) / 2)) / 2.0;
 		} else {
-			return (findkth(A, 0, B, 0, total / 2) + findkth(A, 0, B, 0,
-					total / 2 + 1)) / 2.0;
+			return findNth(A, 0, B, 0, (lenA + lenB) / 2 + 1);
 		}
 	}
 
-	private double findkth(int[] A, int startA, int[] B, int startB, int target) {
+	private int findNth(int[] A, int startA, int[] B, int startB, int n) {
 		int lenA = A.length, lenB = B.length;
 		if (lenA > lenB) {
-			return findkth(B, startB, A, startA, target);
+			return findNth(B, startB, A, startA, n);
 		}
+
 		if (startA == lenA) {
-			return B[startB + target - 1];
-		}
-		if (startB == lenB) {
-			return A[startA + target - 1];
-		}
-		if (target == 1) {
+			return B[startB + n - 1];
+		} else if (startB == lenB) {
+			return A[startA + n - 1];
+		} else if (n == 1) {
 			return Math.min(A[startA], B[startB]);
 		}
 
-		int partitionA = Math.min(lenA - startA, target / 2), partitionB = target
-				- partitionA;
-		if (A[startA + partitionA - 1] == B[startB + partitionB - 1]) {
-			return A[startA + partitionA - 1];
-		} else if (A[startA + partitionA - 1] < B[startB + partitionB - 1]) {
-			return findkth(A, startA + partitionA, B, startB, target
-					- partitionA);
+		int partA = Math.min(n / 2, lenA - startA), partB = n - partA;
+		int nthA = A[startA + partA - 1], nthB = B[startB + partB - 1];
+		if (nthA == nthB) {
+			return nthA;
+		} else if (nthA > nthB) {
+			return findNth(A, startA, B, startB + partB, n - partB);
 		} else {
-			return findkth(A, startA, B, startB + partitionB, target
-					- partitionB);
+			return findNth(A, startA + partA, B, startB, n - partA);
 		}
 	}
 
