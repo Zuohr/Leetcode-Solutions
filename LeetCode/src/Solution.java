@@ -588,6 +588,8 @@ public class Solution {
 	}
 
 	/**
+	 * $(Surrounded Region)
+	 * 
 	 * Given a 2D board containing 'X' and 'O', capture all regions surrounded
 	 * by 'X'.
 	 * 
@@ -3684,19 +3686,20 @@ public class Solution {
 	 */
 
 	public int minimumTotal(ArrayList<ArrayList<Integer>> triangle) {
-		if (triangle == null || triangle.size() == 0) {
+		if (triangle == null) {
 			return 0;
 		}
-		int len = triangle.size();
-		ArrayList<Integer> last = triangle.get(len - 1);
-		for (int i = len - 2; i >= 0; i--) {
-			ArrayList<Integer> temp = new ArrayList<Integer>();
+
+		ArrayList<Integer> last = triangle.get(triangle.size() - 1);
+		for (int i = triangle.size() - 2; i >= 0; i--) {
+			ArrayList<Integer> newRow = new ArrayList<Integer>();
 			ArrayList<Integer> curr = triangle.get(i);
 			for (int j = 0; j < curr.size(); j++) {
-				temp.add(curr.get(j) + Math.min(last.get(j), last.get(j + 1)));
+				newRow.add(curr.get(j) + Math.min(last.get(j), last.get(j + 1)));
 			}
-			last = temp;
+			last = newRow;
 		}
+
 		return last.get(0);
 	}
 
@@ -4864,32 +4867,36 @@ public class Solution {
 		if (path == null) {
 			return null;
 		}
-		String[] nodes = path.split("/+");
-		Stack<String> s = new Stack<String>();
-		for (String node : nodes) {
-			if (".".equals(node) || "".equals(node)) {
+
+		String[] dirs = path.split("/+");
+		if (dirs.length == 0) {
+			return "/";
+		}
+
+		String[] stack = new String[dirs.length];
+		int top = 0;
+		for (String dir : dirs) {
+			if (".".equals(dir) || dir.isEmpty()) {
 				continue;
-			} else if ("..".equals(node)) {
-				if (!s.isEmpty()) {
-					s.pop();
+			} else if ("..".equals(dir)) {
+				if (top > 0) {
+					top--;
 				}
 			} else {
-				s.push(node);
+				stack[top++] = dir;
 			}
 		}
-		String result = "";
-		if (s.isEmpty()) {
-			result = "/";
+
+		if (top == 0) {
+			return "/";
 		} else {
-			Stack<String> rev = new Stack<String>();
-			while (!s.isEmpty()) {
-				rev.push(s.pop());
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < top; i++) {
+				sb.append("/");
+				sb.append(stack[i]);
 			}
-			while (!rev.isEmpty()) {
-				result += "/" + rev.pop();
-			}
+			return sb.toString();
 		}
-		return result;
 	}
 
 	/**
@@ -5303,40 +5310,46 @@ public class Solution {
 	 */
 
 	public int longestValidParentheses(String s) {
-		if (s == null || s.length() < 2) {
+		if (s == null) {
 			return 0;
 		}
-		int len = s.length(), max = 0, count = 0;
-		int[] stack = new int[len + 1];
-		int top = 0;
-		for (int i = 0; i < len; i++) {
+
+		int cnt = 0, open = 0, max = 0;
+		for (int i = 0; i < s.length(); i++) {
 			if (s.charAt(i) == '(') {
-				stack[top++] = i;
+				open++;
 			} else {
-				if (top > 0) {
-					top--;
-					count += 2;
-					if (top == 0) {
-						max = Math.max(max, count);
-					}
+				if (open == 0) {
+					cnt = 0;
 				} else {
-					max = Math.max(max, count);
-					count = 0;
+					open--;
+					cnt += 2;
+					if (open == 0) {
+						max = Math.max(max, cnt);
+					}
 				}
 			}
 		}
-		if (top > 0) {
-			stack[top] = len;
-			for (int i = 1; i <= top; i++) {
-				max = Math.max(max, stack[i] - stack[i - 1] - 1);
+
+		cnt = 0;
+		open = 0;
+		for (int i = s.length() - 1; i >= 0; i--) {
+			if (s.charAt(i) == ')') {
+				open++;
+			} else {
+				if (open == 0) {
+					cnt = 0;
+				} else {
+					open--;
+					cnt += 2;
+					if (open == 0) {
+						max = Math.max(max, cnt);
+					}
+				}
 			}
 		}
-		return max;
-	}
 
-	@Test
-	public void testLongestValidParentheses() {
-		System.out.println(longestValidParentheses("()()()()()(())(()))))"));
+		return max;
 	}
 
 	/**
