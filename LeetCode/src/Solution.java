@@ -8306,130 +8306,76 @@ public class Solution {
 	 * inserting a new item.
 	 */
 
-	class LRUCache {
-		private int capacity;
-		private int size;
-		private Node head, tail;
-		private HashMap<Integer, Node> m;
+	public class LRUCache {
+		private class LRUNode {
+			private int key;
+			private int val;
+			private LRUNode prev;
+			private LRUNode next;
+
+			public LRUNode(int key, int val) {
+				this.key = key;
+				this.val = val;
+				prev = null;
+				next = null;
+			}
+		}
+
+		private LRUNode head;
+		private LRUNode tail;
+		private Map<Integer, LRUNode> map;
+		private final int capacity;
+		private int size = 0;
 
 		public LRUCache(int capacity) {
 			this.capacity = capacity;
-			size = 0;
-			head = new Node();
-			tail = new Node();
-			head.prev = null;
+			this.head = new LRUNode(0, 0);
+			this.tail = new LRUNode(0, 0);
 			head.next = tail;
 			tail.prev = head;
-			tail.next = null;
-			m = new HashMap<Integer, Node>();
+			this.map = new HashMap<Integer, LRUNode>();
 		}
 
 		public int get(int key) {
-			Node node = m.get(key);
+			LRUNode node = map.get(key);
 			if (node == null) {
 				return -1;
 			} else {
-				int val = node.val;
-				updateHistory(node);
-				return val;
+				remove(node);
+				insert(node);
+				return node.val;
 			}
 		}
 
 		public void set(int key, int value) {
-			Node node = m.get(key);
+			LRUNode node = map.get(key);
 			if (node == null) {
-				insertNew(new Node(key, value));
+				node = new LRUNode(key, value);
+				map.put(key, node);
+				insert(node);
+				size++;
+				if (size > capacity) {
+					map.remove(tail.prev.key);
+					remove(tail.prev);
+					size--;
+				}
 			} else {
 				node.val = value;
-				updateHistory(node);
+				remove(node);
+				insert(node);
 			}
 		}
 
-		private void updateHistory(Node node) {
+		private void remove(LRUNode node) {
 			node.prev.next = node.next;
 			node.next.prev = node.prev;
-			insertFirst(node);
 		}
 
-		private void insertNew(Node node) {
-			if (size() == capacity) {
-				removeLast();
-			} else {
-				size++;
-			}
-			insertFirst(node);
-			m.put(node.key, node);
-		}
-
-		private void insertFirst(Node node) {
+		private void insert(LRUNode node) {
 			node.next = head.next;
 			node.prev = head;
 			head.next = node;
 			node.next.prev = node;
-		}
-
-		private void removeLast() {
-			if (size() > 0) {
-				Node node = tail.prev;
-				node.prev.next = tail;
-				tail.prev = node.prev;
-				node.next = null;
-				node.prev = null;
-				m.remove(node.key);
-			}
-		}
-
-		private int size() {
-			return size;
-		}
-
-		private class Node {
-			private int key;
-			private int val;
-			private Node next = null;
-			private Node prev = null;
-
-			public Node() {
-				this.key = -1;
-				this.val = -1;
-			}
-
-			public Node(int key, int val) {
-				this.key = key;
-				this.val = val;
-			}
-		}
-
-		public void print() {
-			Node ptr = head;
-			while (ptr != null) {
-				System.out.printf("(%d: %d) -> ", ptr.key, ptr.val);
-				ptr = ptr.next;
-			}
-			System.out.println();
-		}
-	}
-
-	@Test
-	public void testLRU() {
-		LRUCache lru = new LRUCache(10);
-		for (int i = 0; i < 15; i++) {
-			lru.set(i, i);
-			lru.print();
-		}
-		for (int i = 15; i >= 0; i--) {
-			System.out.println(lru.get(i));
-			lru.print();
-		}
-		System.out.println("*****");
-		for (int i = 0; i < 5; i++) {
-			lru.set(i, i);
-			lru.print();
-		}
-		System.out.println("=====");
-		for (int i = 9; i >= 0; i--) {
-			lru.set(i, 0);
-			lru.print();
 		}
 	}
 
