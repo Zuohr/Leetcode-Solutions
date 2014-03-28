@@ -6834,94 +6834,95 @@ public class Solution {
 	 */
 
 	public String minWindow(String S, String T) {
-		if (S == null || S.isEmpty() || T == null || T.isEmpty()
-				|| S.length() < T.length()) {
+		if (S == null || T == null) {
+			return null;
+		} else if (S.isEmpty() || T.isEmpty() || S.length() < T.length()) {
 			return "";
-		}
-		if (T.length() == 1 && S.indexOf(T) != -1) {
-			return T;
 		}
 
 		int lenS = S.length(), lenT = T.length();
-		HashMap<Character, Integer> mT = new HashMap<Character, Integer>();
+		char[] dict = new char[256], curr = new char[256];
 		for (int i = 0; i < lenT; i++) {
-			char ch = T.charAt(i);
-			Integer cnt = mT.get(ch);
-			if (cnt == null) {
-				mT.put(ch, 1);
-			} else {
-				mT.put(ch, cnt + 1);
+			dict[T.charAt(i)]++;
+		}
+
+		int cnt = 0, minSize = Integer.MAX_VALUE, start = 0, end = 0;
+		for (int i = 0, j = 0; i < lenS; i++) {
+			if (cnt < lenT) {
+				char ch = S.charAt(i);
+				if (curr[ch] < dict[ch]) {
+					cnt++;
+				}
+				curr[ch]++;
+			}
+			if (cnt == lenT) {
+				while (j <= i && curr[S.charAt(j)] > dict[S.charAt(j)]) {
+					curr[S.charAt(j)]--;
+					j++;
+				}
+				if (i - j + 1 < minSize) {
+					minSize = i - j + 1;
+					start = j;
+					end = i;
+				}
+				while (j <= i && cnt == lenT) {
+					curr[S.charAt(j)]--;
+					if (curr[S.charAt(j)] < dict[S.charAt(j)]) {
+						cnt--;
+					}
+					j++;
+				}
 			}
 		}
 
-		HashMap<Character, Integer> mTemp = new HashMap<Character, Integer>(mT);
-		int head = 0, tail = 0;
-		boolean found = false;
-		for (; tail < lenS; tail++) {
-			char ch = S.charAt(tail);
-			Integer cnt = mTemp.get(ch);
-			if (cnt != null) {
-				if (cnt == 1) {
-					mTemp.remove(ch);
-				} else {
-					mTemp.put(ch, cnt - 1);
-				}
-			}
-			if (mTemp.isEmpty()) {
-				found = true;
-				tail++;
-				break;
-			}
+		if (minSize == Integer.MAX_VALUE) {
+			return "";
+		} else {
+			return S.substring(start, end + 1);
 		}
-		if (!found) {
+	}
+
+	public String minWindowTLE(String S, String T) {
+		if (S == null || T == null) {
+			return null;
+		} else if (S.isEmpty() || T.isEmpty() || S.length() < T.length()) {
 			return "";
 		}
 
-		HashMap<Character, Integer> mWin = new HashMap<Character, Integer>();
-		for (int i = head; i < tail; i++) {
-			char ch = S.charAt(i);
-			if (mT.containsKey(ch)) {
-				Integer cnt = mWin.get(ch);
-				if (cnt == null) {
-					mWin.put(ch, 1);
-				} else {
-					mWin.put(ch, cnt + 1);
-				}
+		int lenS = S.length(), lenT = T.length(), minSize = Integer.MAX_VALUE;
+		String result = "";
+		Map<Character, Integer> dictT = new HashMap<Character, Integer>();
+		for (int i = 0; i < lenT; i++) {
+			Integer cnt = dictT.get(T.charAt(i));
+			if (cnt == null) {
+				dictT.put(T.charAt(i), 1);
+			} else {
+				dictT.put(T.charAt(i), cnt + 1);
 			}
 		}
 
-		String minWin = S.substring(head, tail);
-		while (true) {
-			while (true) {
-				char ch = S.charAt(head);
-				Integer cnt = mWin.get(ch);
-				if (cnt != null) {
-					if (cnt > mT.get(ch)) {
-						mWin.put(ch, cnt - 1);
-					} else {
-						break;
+		for (int i = 0; i <= lenS - lenT; i++) {
+			if (dictT.containsKey(S.charAt(i))) {
+				Map<Character, Integer> tempDict = new HashMap<Character, Integer>(
+						dictT);
+				for (int j = i; j < lenS; j++) {
+					Integer cnt = tempDict.get(S.charAt(j));
+					if (cnt != null) {
+						if (cnt == 1) {
+							tempDict.remove(S.charAt(j));
+							if (tempDict.isEmpty() && j - i + 1 < minSize) {
+								minSize = j - i + 1;
+								result = S.substring(i, j + 1);
+							}
+						} else {
+							tempDict.put(S.charAt(j), cnt - 1);
+						}
 					}
 				}
-				head++;
-			}
-			if (tail - head < minWin.length()) {
-				minWin = S.substring(head, tail);
-			}
-			if (tail == lenS) {
-				break;
-			}
-			for (; tail < lenS; tail++) {
-				char ch = S.charAt(tail);
-				Integer cnt = mWin.get(ch);
-				if (cnt != null) {
-					mWin.put(ch, cnt + 1);
-					tail++;
-					break;
-				}
 			}
 		}
 
-		return minWin;
+		return result;
 	}
 
 	/**
