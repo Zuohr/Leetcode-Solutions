@@ -4488,32 +4488,30 @@ public class Solution {
 
 	public ArrayList<Interval> merge(ArrayList<Interval> intervals) {
 		if (intervals == null || intervals.size() < 2) {
-			return intervals;
+		    return intervals;
 		}
-		Collections.sort(intervals, new CmpInterval());
-		for (int i = 0; i < intervals.size() - 1;) {
-			Interval curr = intervals.get(i);
-			Interval next = intervals.get(i + 1);
-			if (curr.end >= next.start) {
-				curr.end = Math.max(curr.end, next.end);
-				intervals.remove(i + 1);
-			} else {
-				i++;
-			}
-		}
-		return intervals;
+		
+		Collections.sort(intervals, new IntervalCmp());
+		int curr = 0, currEnd = intervals.get(curr).end, index = 1;
+	    while (index < intervals.size()) {
+	        if (intervals.get(index).start <= currEnd) {
+	            currEnd = Math.max(currEnd, intervals.get(index).end);
+	            intervals.get(curr).end = currEnd;
+	            intervals.remove(index);
+	        } else {
+	            currEnd = intervals.get(index).end;
+	            curr = index;
+	            index++;
+	        }
+	    }
+	    
+	    return intervals;
 	}
-
-	class CmpInterval implements Comparator<Interval> {
-		public int compare(Interval o1, Interval o2) {
-			if (o1.start < o2.start) {
-				return -1;
-			} else if (o1.start > o2.start) {
-				return 1;
-			} else {
-				return 0;
-			}
-		}
+	
+	public class IntervalCmp implements Comparator<Interval> {
+	    public int compare(Interval i1, Interval i2) {
+	        return i1.start - i2.start;
+	    }
 	}
 
 	/**
@@ -4919,45 +4917,47 @@ public class Solution {
 
 	public ArrayList<Interval> insert(ArrayList<Interval> intervals,
 			Interval newInterval) {
-		if (intervals.size() == 0) {
+		if (intervals == null || newInterval == null) {
+			return intervals;
+		} else if (intervals.isEmpty()) {
 			intervals.add(newInterval);
-		} else {
-			int mergeStart = getPosition(intervals, newInterval.start);
-			int mergeEnd = getPosition(intervals, newInterval.end);
-			int start, end = mergeEnd;
-			if (mergeStart > 0
-					&& newInterval.start <= intervals.get(mergeStart - 1).end) {
-				newInterval.start = intervals.get(mergeStart - 1).start;
-				start = mergeStart - 1;
-			} else {
-				start = mergeStart;
-			}
-			if (mergeEnd > 0
-					&& newInterval.end <= intervals.get(mergeEnd - 1).end) {
-				newInterval.end = intervals.get(mergeEnd - 1).end;
-			} else if (mergeEnd < intervals.size()
-					&& newInterval.end == intervals.get(mergeEnd).start) {
-				newInterval.end = intervals.get(mergeEnd).end;
-				end = mergeEnd + 1;
-			}
-			for (int i = 0; i < end - start; i++) {
-				intervals.remove(start);
-			}
-			intervals.add(start, newInterval);
+			return intervals;
 		}
+
+		int size = intervals.size();
+		int startPos = findPosition(intervals, newInterval.start);
+		int endPos = findPosition(intervals, newInterval.end);
+		int delStart = startPos, delEnd = endPos - 1;
+		if (startPos > 0
+				&& newInterval.start <= intervals.get(startPos - 1).end) {
+			newInterval.start = intervals.get(startPos - 1).start;
+			delStart = startPos - 1;
+		}
+		if (endPos > 0 && newInterval.end <= intervals.get(endPos - 1).end) {
+			newInterval.end = intervals.get(endPos - 1).end;
+		} else if (endPos < size
+				&& newInterval.end == intervals.get(endPos).start) {
+			newInterval.end = intervals.get(endPos).end;
+			delEnd = endPos;
+		}
+		for (int i = 0; i < delEnd - delStart + 1; i++) {
+			intervals.remove(delStart);
+		}
+		intervals.add(delStart, newInterval);
+
 		return intervals;
 	}
 
-	private int getPosition(ArrayList<Interval> arr, int val) {
+	private int findPosition(ArrayList<Interval> arr, int val) {
 		int start = 0, end = arr.size() - 1;
 		while (start <= end) {
-			int mid = (start + end) / 2;
-			if (val == arr.get(mid).start) {
+			int mid = start + (end - start) / 2;
+			if (arr.get(mid).start == val) {
 				return mid;
-			} else if (val < arr.get(mid).start) {
-				end = mid - 1;
-			} else {
+			} else if (arr.get(mid).start < val) {
 				start = mid + 1;
+			} else {
+				end = mid - 1;
 			}
 		}
 		return start;
@@ -8544,5 +8544,36 @@ public class Solution {
 			start++;
 			end--;
 		}
+	}
+
+	/**
+	 * $(Implement strStr())
+	 * 
+	 * Implement strStr().
+	 * 
+	 * Returns a pointer to the first occurrence of needle in haystack, or null
+	 * if needle is not part of haystack.
+	 */
+
+	public String strStr(String haystack, String needle) {
+		if (haystack == null || needle == null
+				|| needle.length() > haystack.length()) {
+			return null;
+		}
+
+		int len1 = haystack.length(), len2 = needle.length();
+		int i, j;
+		for (i = 0; i < len1 - len2 + 1; i++) {
+			for (j = 0; j < len2; j++) {
+				if (needle.charAt(j) != haystack.charAt(i + j)) {
+					break;
+				}
+			}
+			if (j == len2) {
+				return haystack.substring(i);
+			}
+		}
+
+		return null;
 	}
 }
