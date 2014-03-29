@@ -3608,65 +3608,34 @@ public class Solution {
 			return l1;
 		}
 
-		int c1 = 0;
-		ListNode p1 = l1;
-		while (p1 != null) {
-			c1++;
-			p1 = p1.next;
-		}
-		int c2 = 0;
-		ListNode p2 = l2;
-		while (p2 != null) {
-			c2++;
-			p2 = p2.next;
-		}
-
-		if (c2 > c1) {
-			p1 = l2;
-			p2 = l1;
-		} else {
-			p1 = l1;
-			p2 = l2;
-		}
-
+		ListNode dummy = new ListNode(0), ptr = dummy;
 		int carry = 0;
-		ListNode head = null, ptr = null;
-		while (p2 != null) {
-			int v = p1.val + p2.val + carry;
-			carry = 0;
-			if (v >= 10) {
-				v -= 10;
-				carry = 1;
-			}
-			ListNode newNode = new ListNode(v);
-			if (head == null) {
-				ptr = newNode;
-				head = ptr;
-			} else {
-				ptr.next = newNode;
-				ptr = ptr.next;
-			}
-			p1 = p1.next;
-			p2 = p2.next;
-		}
-		while (p1 != null) {
-			int v = p1.val + carry;
-			carry = 0;
-			if (v >= 10) {
-				v -= 10;
-				carry = 1;
-			}
-			ListNode newNode = new ListNode(v);
-			ptr.next = newNode;
+		while (l1 != null && l2 != null) {
+			int sum = l1.val + l2.val + carry;
+			ptr.next = new ListNode(sum % 10);
 			ptr = ptr.next;
-			p1 = p1.next;
-		}
-		if (carry == 1) {
-			ListNode newNode = new ListNode(1);
-			ptr.next = newNode;
+			carry = sum / 10;
+			l1 = l1.next;
+			l2 = l2.next;
 		}
 
-		return head;
+		if (l1 == null) {
+			l1 = l2;
+		}
+
+		while (l1 != null) {
+			int sum = l1.val + carry;
+			ptr.next = new ListNode(sum % 10);
+			ptr = ptr.next;
+			carry = sum / 10;
+			l1 = l1.next;
+		}
+
+		if (carry == 1) {
+			ptr.next = new ListNode(1);
+		}
+
+		return dummy.next;
 	}
 
 	/**
@@ -4220,50 +4189,45 @@ public class Solution {
 			return 0;
 		}
 
-		int w = matrix[0].length;
-		int h = matrix.length;
-		int maxArea = 0;
-		int[] ht = new int[w];
-		for (int row = 0; row < h; row++) {
-			for (int col = 0; col < w; col++) {
+		int ht = matrix.length, wd = matrix[0].length, maxArea = 0;
+		int[] heights = new int[wd];
+		for (int row = 0; row < ht; row++) {
+			for (int col = 0; col < wd; col++) {
 				if (matrix[row][col] == '0') {
-					ht[col] = 0;
+					heights[col] = 0;
 				} else {
-					ht[col]++;
+					heights[col]++;
 				}
 			}
-			maxArea = Math.max(maxArea, getMaximumRect(ht));
+			maxArea = Math.max(maxArea, getMaxArea(heights));
 		}
 
 		return maxArea;
 	}
 
-	private int getMaximumRect(int[] arr) {
-		int len = arr.length;
-		Stack<Integer> leftBorders = new Stack<Integer>();
-		Stack<Integer> heights = new Stack<Integer>();
-		int maxArea = 0;
-		for (int i = 0; i < len; i++) {
-			if (leftBorders.isEmpty() || arr[i] > heights.peek()) {
-				leftBorders.push(i);
-				heights.push(arr[i]);
-			} else if (arr[i] < heights.peek()) {
-				int lastBorder = leftBorders.peek();
-				while (!leftBorders.isEmpty() && heights.peek() > arr[i]) {
-					int index = leftBorders.pop();
-					int height = heights.pop();
-					lastBorder = index;
-					maxArea = Math.max(maxArea, (i - index) * height);
+	private int getMaxArea(int[] heights) {
+		int maxArea = 0, len = heights.length;
+		Stack<Integer> pos = new Stack<Integer>();
+		Stack<Integer> hgt = new Stack<Integer>();
+		pos.push(0);
+		hgt.push(heights[0]);
+		for (int i = 1; i < len; i++) {
+			if (heights[i] >= hgt.peek()) {
+				pos.push(i);
+				hgt.push(heights[i]);
+			} else {
+				int lastPos = pos.peek();
+				while (!pos.isEmpty() && heights[i] < hgt.peek()) {
+					lastPos = pos.peek();
+					maxArea = Math.max(maxArea, (i - pos.pop()) * hgt.pop());
 				}
-				leftBorders.push(lastBorder);
-				heights.push(arr[i]);
+				pos.push(lastPos);
+				hgt.push(heights[i]);
 			}
 		}
 
-		while (!leftBorders.isEmpty()) {
-			int index = leftBorders.pop();
-			int height = heights.pop();
-			maxArea = Math.max(maxArea, (len - index) * height);
+		while (!pos.isEmpty()) {
+			maxArea = Math.max(maxArea, (len - pos.pop()) * hgt.pop());
 		}
 
 		return maxArea;
@@ -4284,37 +4248,30 @@ public class Solution {
 			return 0;
 		}
 
-		int len = height.length;
-		int maxArea = 0;
-		Stack<Integer> left = new Stack<Integer>();
-		Stack<Integer> ht = new Stack<Integer>();
-		for (int i = 0; i < len; i++) {
-			if (left.isEmpty() || height[i] > ht.peek()) {
-				left.push(i);
-				ht.push(height[i]);
-			} else if (height[i] < ht.peek()) {
-				int lastIndex = left.peek();
-				while (!ht.isEmpty() && ht.peek() > height[i]) {
-					int index = left.pop();
-					lastIndex = index;
-					int h = ht.pop();
-					int area = (i - index) * h;
-					if (area > maxArea) {
-						maxArea = area;
-					}
+		Stack<Integer> posStack = new Stack<Integer>();
+		Stack<Integer> hgtStack = new Stack<Integer>();
+		int maxArea = 0, len = height.length;
+		posStack.push(0);
+		hgtStack.push(height[0]);
+		for (int i = 1; i < len; i++) {
+			if (height[i] >= hgtStack.peek()) {
+				posStack.push(i);
+				hgtStack.push(height[i]);
+			} else {
+				int lastPos = posStack.peek();
+				while (!hgtStack.isEmpty() && hgtStack.peek() > height[i]) {
+					lastPos = posStack.peek();
+					maxArea = Math.max(maxArea,
+							(i - posStack.pop()) * hgtStack.pop());
 				}
-				left.push(lastIndex);
-				ht.push(height[i]);
+				posStack.push(lastPos);
+				hgtStack.push(height[i]);
 			}
 		}
 
-		while (!left.isEmpty()) {
-			int index = left.pop();
-			int h = ht.pop();
-			int area = (len - index) * h;
-			if (area > maxArea) {
-				maxArea = area;
-			}
+		while (!posStack.isEmpty()) {
+			maxArea = Math
+					.max(maxArea, (len - posStack.pop()) * hgtStack.pop());
 		}
 
 		return maxArea;
@@ -4488,30 +4445,30 @@ public class Solution {
 
 	public ArrayList<Interval> merge(ArrayList<Interval> intervals) {
 		if (intervals == null || intervals.size() < 2) {
-		    return intervals;
+			return intervals;
 		}
-		
+
 		Collections.sort(intervals, new IntervalCmp());
 		int curr = 0, currEnd = intervals.get(curr).end, index = 1;
-	    while (index < intervals.size()) {
-	        if (intervals.get(index).start <= currEnd) {
-	            currEnd = Math.max(currEnd, intervals.get(index).end);
-	            intervals.get(curr).end = currEnd;
-	            intervals.remove(index);
-	        } else {
-	            currEnd = intervals.get(index).end;
-	            curr = index;
-	            index++;
-	        }
-	    }
-	    
-	    return intervals;
+		while (index < intervals.size()) {
+			if (intervals.get(index).start <= currEnd) {
+				currEnd = Math.max(currEnd, intervals.get(index).end);
+				intervals.get(curr).end = currEnd;
+				intervals.remove(index);
+			} else {
+				currEnd = intervals.get(index).end;
+				curr = index;
+				index++;
+			}
+		}
+
+		return intervals;
 	}
-	
+
 	public class IntervalCmp implements Comparator<Interval> {
-	    public int compare(Interval i1, Interval i2) {
-	        return i1.start - i2.start;
-	    }
+		public int compare(Interval i1, Interval i2) {
+			return i1.start - i2.start;
+		}
 	}
 
 	/**
