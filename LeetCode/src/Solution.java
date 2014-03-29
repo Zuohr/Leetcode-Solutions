@@ -6403,94 +6403,127 @@ public class Solution {
 	 */
 
 	public String multiply(String num1, String num2) {
-		int i = 0;
-		while (i < num1.length() && num1.charAt(i) == '0') {
-			i++;
-		}
-		num1 = num1.substring(i);
-		if ("".equals(num1)) {
+		if (num1 == null || num1.isEmpty() || num2 == null || num2.isEmpty()
+				|| "0".equals(num1) || "0".equals(num2)) {
 			return "0";
 		}
 
-		i = 0;
-		while (i < num2.length() && num2.charAt(i) == '0') {
-			i++;
-		}
-		num2 = num2.substring(i);
-		if ("".equals(num2)) {
-			return "0";
-		}
-
-		if (num1.length() < num2.length()) {
-			String temp = num1;
-			num1 = num2;
-			num2 = temp;
-		}
 		int len1 = num1.length(), len2 = num2.length();
-
-		boolean[] m = new boolean[10];
-		for (i = 0; i < len2; i++) {
-			m[num2.charAt(i) - '0'] = true;
-		}
-		String[] map = new String[10];
-		map[0] = "";
-		map[1] = num1;
-		for (i = 2; i < 10; i++) {
-			if (m[i]) {
-				StringBuilder sb = new StringBuilder();
-				int carry = 0;
-				for (int j = len1 - 1; j >= 0; j--) {
-					int product = (num1.charAt(j) - '0') * i + carry;
-					carry = 0;
-					if (product >= 10) {
-						carry = product / 10;
-						product %= 10;
-					}
-					sb.insert(0, product);
-				}
-				if (carry > 0) {
-					sb.insert(0, carry);
-				}
-				map[i] = sb.toString();
-			}
+		if (len1 < len2) {
+			return multiply(num2, num1);
 		}
 
-		String[] subp = new String[len2];
-		for (i = len2 - 1; i >= 0; i--) {
-			StringBuilder sb = new StringBuilder(map[num2.charAt(i) - '0']);
-			for (int j = 0; j < len2 - 1 - i; j++) {
-				sb.append('0');
+		Set<Character> digits = new HashSet<Character>();
+		for (int i = 0; i < len2 && digits.size() < 10; i++) {
+			digits.add(num2.charAt(i));
+		}
+		Map<Character, String> map = getProducts(num1, digits);
+
+		Queue<String> q = new LinkedList<String>();
+		StringBuilder sb = new StringBuilder();
+		for (int i = num2.length() - 1; i >= 0; i--) {
+			if (num2.charAt(i) != '0') {
+				String product = map.get(num2.charAt(i));
+				product += sb.toString();
+				q.add(product);
 			}
-			subp[len2 - 1 - i] = sb.toString();
+			sb.append('0');
 		}
 
-		int carry = 0;
-		StringBuilder result = new StringBuilder();
-		for (i = 0;; i++) {
-			boolean stop = true;
-			int sum = 0;
-			for (int j = 0; j < len2; j++) {
-				if (subp[j].length() - 1 - i >= 0) {
-					stop = false;
-					sum += subp[j].charAt(subp[j].length() - 1 - i) - '0';
-				}
+		while (q.size() > 1) {
+			Queue<String> dst = new LinkedList<String>();
+			while (!q.isEmpty()) {
+				String x1 = q.poll(), x2 = q.poll();
+				dst.add(stringAdd(x1, x2));
 			}
-			if (stop) {
-				if (carry > 0) {
-					result.insert(0, carry);
-				}
-				break;
+			q = dst;
+		}
+
+		return q.poll();
+	}
+
+	private Map<Character, String> getProducts(String num, Set<Character> digits) {
+		char[] chs = num.toCharArray();
+		int[] nums = new int[chs.length];
+		for (int i = 0; i < nums.length; i++) {
+			nums[i] = chs[i] - '0';
+		}
+		HashMap<Character, String> result = new HashMap<Character, String>();
+		for (Character digit : digits) {
+			if (digit == '0') {
+				result.put(digit, "0");
 			} else {
-				sum += carry;
-				carry = 0;
-				if (sum >= 10) {
-					carry = sum / 10;
-					sum %= 10;
-				}
-				result.insert(0, sum);
+				result.put(digit, stringMultiply(nums, digit - '0'));
 			}
 		}
-		return result.toString();
+
+		return result;
+	}
+
+	private String stringMultiply(int[] num, int digit) {
+		int carry = 0;
+		int[] products = new int[num.length];
+		for (int i = num.length - 1; i >= 0; i--) {
+			int product = digit * num[i] + carry;
+			products[i] = product % 10;
+			carry = product / 10;
+		}
+
+		StringBuilder sb = new StringBuilder();
+		if (carry != 0) {
+			sb.append((char) ('0' + carry));
+		}
+		for (int n : products) {
+			sb.append((char) ('0' + n));
+		}
+
+		return sb.toString();
+	}
+
+	private String stringAdd(String num1, String num2) {
+		if (num1 == null) {
+			return num2;
+		} else if (num2 == null) {
+			return num1;
+		}
+
+		int len1 = num1.length(), len2 = num2.length();
+		if (len1 < len2) {
+			return stringAdd(num2, num1);
+		}
+
+		int[] arr1 = new int[len1], arr2 = new int[len2];
+		for (int i = 0; i < arr1.length; i++) {
+			arr1[i] = num1.charAt(i) - '0';
+		}
+		for (int i = 0; i < arr2.length; i++) {
+			arr2[i] = num2.charAt(i) - '0';
+		}
+
+		int[] result = new int[len1];
+		int carry = 0, i = 0;
+		for (; i < len2; i++) {
+			int sum = arr1[len1 - 1 - i] + arr2[len2 - 1 - i] + carry;
+			result[len1 - 1 - i] = sum % 10;
+			carry = sum / 10;
+		}
+
+		while (i < len1) {
+			int sum = arr1[len1 - 1 - i] + carry;
+			result[len1 - 1 - i] = sum % 10;
+			carry = sum / 10;
+			i++;
+		}
+
+		StringBuilder sb = new StringBuilder();
+		if (carry > 0) {
+			sb.append((char) ('0' + carry));
+		}
+		for (int digit : result) {
+			sb.append((char) ('0' + digit));
+		}
+
+		return sb.toString();
 	}
 
 	/**
