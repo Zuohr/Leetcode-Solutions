@@ -6226,62 +6226,40 @@ public class Solution {
 
 	public ArrayList<Integer> spiralOrder(int[][] matrix) {
 		ArrayList<Integer> result = new ArrayList<Integer>();
-		if (matrix != null && matrix.length > 0 && matrix[0] != null
-				&& matrix[0].length > 0) {
-			int h = matrix.length, w = matrix[0].length;
-			int[][] directions = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
-			int row = 0, col = 1, direction = 0;
-			int upper = 0, right = w - 1, lower = h - 1, left = 0;
-			for (int i = 0, r = 0, c = 0; i < h * w; i++) {
-				result.add(matrix[r][c]);
-				switch (direction) {
-				case 0:
-					if (c + directions[direction][col] > right) {
-						direction = (direction + 1) % 4;
-						upper++;
-					}
-					break;
-				case 1:
-					if (r + directions[direction][row] > lower) {
-						direction = (direction + 1) % 4;
-						right--;
-					}
-					break;
-				case 2:
-					if (c + directions[direction][col] < left) {
-						direction = (direction + 1) % 4;
-						lower--;
-					}
-					break;
-				case 3:
-					if (r + directions[direction][row] < upper) {
-						direction = (direction + 1) % 4;
-						left++;
-					}
-				}
-				r += directions[direction][row];
-				c += directions[direction][col];
-			}
+		if (matrix == null || matrix.length == 0 || matrix[0] == null || matrix[0].length == 0) {
+		    return result;
 		}
+		
+		int[][] dirs = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
+		int ht = matrix.length, wd = matrix[0].length, dir = 0, currRow = 0, currCol = 0;
+		int left = -1, right = wd, up = 0, down = ht;
+		for (int i = 0; i < ht * wd; i++) {
+		    result.add(matrix[currRow][currCol]);
+		    int nextRow = currRow + dirs[dir][0], nextCol = currCol + dirs[dir][1];
+		    boolean turn = false;
+		    if (dir == 0 && nextCol == right) {
+		        right--;
+		        turn = true;
+		    } else if (dir == 1 && nextRow == down) {
+		        down--;
+		        turn = true;
+		    } else if (dir == 2 && nextCol == left) {
+		        left++;
+		        turn = true;
+		    } else if (dir == 3 && nextRow == up) {
+		        up++;
+		        turn = true;
+	        }
+	        if (turn) {
+	            dir = (dir + 1) % 4;
+	            nextRow = currRow + dirs[dir][0];
+	            nextCol = currCol + dirs[dir][1];
+	        }
+	        currRow = nextRow;
+	        currCol = nextCol;
+		}
+		
 		return result;
-	}
-
-	@Test
-	public void testSpiralOrder() {
-		int h = 6, w = 7;
-		int[][] matrix = new int[h][w];
-		for (int r = 0; r < h; r++) {
-			for (int c = 0; c < w; c++) {
-				matrix[r][c] = r * w + c + 1;
-				System.out.print(matrix[r][c]);
-			}
-			System.out.println();
-		}
-		System.out.println("---");
-		ArrayList<Integer> spiralOrder = spiralOrder(matrix);
-		for (Integer n : spiralOrder) {
-			System.out.print(n + ", ");
-		}
 	}
 
 	/**
@@ -6360,124 +6338,29 @@ public class Solution {
 	 */
 
 	public String multiply(String num1, String num2) {
-		if (num1 == null || num1.isEmpty() || num2 == null || num2.isEmpty()
-				|| "0".equals(num1) || "0".equals(num2)) {
-			return "0";
+		if (num1 == null || num2 == null || num1.isEmpty() || num2.isEmpty()) {
+			return null;
 		}
 
-		int len1 = num1.length(), len2 = num2.length();
-		if (len1 < len2) {
-			return multiply(num2, num1);
-		}
-
-		Set<Character> digits = new HashSet<Character>();
-		for (int i = 0; i < len2 && digits.size() < 10; i++) {
-			digits.add(num2.charAt(i));
-		}
-		Map<Character, String> map = getProducts(num1, digits);
-
-		Queue<String> q = new LinkedList<String>();
-		StringBuilder sb = new StringBuilder();
-		for (int i = num2.length() - 1; i >= 0; i--) {
-			if (num2.charAt(i) != '0') {
-				String product = map.get(num2.charAt(i));
-				product += sb.toString();
-				q.add(product);
-			}
-			sb.append('0');
-		}
-
-		while (q.size() > 1) {
-			Queue<String> dst = new LinkedList<String>();
-			while (!q.isEmpty()) {
-				String x1 = q.poll(), x2 = q.poll();
-				dst.add(stringAdd(x1, x2));
-			}
-			q = dst;
-		}
-
-		return q.poll();
-	}
-
-	private Map<Character, String> getProducts(String num, Set<Character> digits) {
-		char[] chs = num.toCharArray();
-		int[] nums = new int[chs.length];
-		for (int i = 0; i < nums.length; i++) {
-			nums[i] = chs[i] - '0';
-		}
-		HashMap<Character, String> result = new HashMap<Character, String>();
-		for (Character digit : digits) {
-			if (digit == '0') {
-				result.put(digit, "0");
-			} else {
-				result.put(digit, stringMultiply(nums, digit - '0'));
+		num1 = new StringBuilder(num1).reverse().toString();
+		num2 = new StringBuilder(num2).reverse().toString();
+		int[] res = new int[num1.length() + num2.length()];
+		for (int i = 0; i < num1.length(); i++) {
+			for (int j = 0; j < num2.length(); j++) {
+				int product = (num1.charAt(i) - '0') * (num2.charAt(j) - '0')
+						+ res[i + j];
+				res[i + j] = product % 10;
+				res[i + j + 1] += product / 10;
 			}
 		}
 
-		return result;
-	}
-
-	private String stringMultiply(int[] num, int digit) {
-		int carry = 0;
-		int[] products = new int[num.length];
-		for (int i = num.length - 1; i >= 0; i--) {
-			int product = digit * num[i] + carry;
-			products[i] = product % 10;
-			carry = product / 10;
-		}
-
 		StringBuilder sb = new StringBuilder();
-		if (carry != 0) {
-			sb.append((char) ('0' + carry));
+		int i = res.length - 1;
+		while (i > 0 && res[i] == 0) {
+			i--;
 		}
-		for (int n : products) {
-			sb.append((char) ('0' + n));
-		}
-
-		return sb.toString();
-	}
-
-	private String stringAdd(String num1, String num2) {
-		if (num1 == null) {
-			return num2;
-		} else if (num2 == null) {
-			return num1;
-		}
-
-		int len1 = num1.length(), len2 = num2.length();
-		if (len1 < len2) {
-			return stringAdd(num2, num1);
-		}
-
-		int[] arr1 = new int[len1], arr2 = new int[len2];
-		for (int i = 0; i < arr1.length; i++) {
-			arr1[i] = num1.charAt(i) - '0';
-		}
-		for (int i = 0; i < arr2.length; i++) {
-			arr2[i] = num2.charAt(i) - '0';
-		}
-
-		int[] result = new int[len1];
-		int carry = 0, i = 0;
-		for (; i < len2; i++) {
-			int sum = arr1[len1 - 1 - i] + arr2[len2 - 1 - i] + carry;
-			result[len1 - 1 - i] = sum % 10;
-			carry = sum / 10;
-		}
-
-		while (i < len1) {
-			int sum = arr1[len1 - 1 - i] + carry;
-			result[len1 - 1 - i] = sum % 10;
-			carry = sum / 10;
-			i++;
-		}
-
-		StringBuilder sb = new StringBuilder();
-		if (carry > 0) {
-			sb.append((char) ('0' + carry));
-		}
-		for (int digit : result) {
-			sb.append((char) ('0' + digit));
+		for (; i >= 0; i--) {
+			sb.append((char) ('0' + res[i]));
 		}
 
 		return sb.toString();
