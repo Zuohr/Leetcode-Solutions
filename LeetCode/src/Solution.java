@@ -862,34 +862,32 @@ public class Solution {
 	 */
 
 	public String getPermutation(int n, int k) {
-		int totalNum = 1;
-		for (int i = 1; i <= n; i++) {
-			totalNum *= i;
-		}
-		if (k <= 0 || k > totalNum) {
-			return null;
-		}
-		int perNum = totalNum / n;
-		int startNum = (k - 1) / perNum;
-		int[] array = new int[n];
+		int[] arr = new int[n];
 		for (int i = 0; i < n; i++) {
-			array[i] = i + 1;
-		}
-		int temp = array[startNum];
-		for (int i = startNum; i > 0; i--) {
-			array[i] = array[i - 1];
-		}
-		array[0] = temp;
-		int permutationNum = (k - 1) % perNum;
-		for (int i = 0; i < permutationNum; i++) {
-			nextPermutation(array, 0, array.length - 1);
+			arr[i] = i + 1;
 		}
 
-		String result = "";
-		for (int i = 0; i < array.length; i++) {
-			result += String.valueOf(array[i]);
+		int[] permNum = new int[n];
+		permNum[n - 1] = 1;
+		for (int i = n - 2; i >= 0; i--) {
+			permNum[i] = (n - i - 1) * permNum[i + 1];
 		}
-		return result;
+
+		for (int i = 0, start = 0; i < n - 1; i++, start++) {
+			int pos = (k - 1) / permNum[i];
+			int temp = arr[start + pos];
+			for (int j = start + pos; j > start; j--) {
+				arr[j] = arr[j - 1];
+			}
+			arr[start] = temp;
+			k -= pos * permNum[i];
+		}
+
+		StringBuilder sb = new StringBuilder();
+		for (int digit : arr) {
+			sb.append((char) ('0' + digit));
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -2710,66 +2708,75 @@ public class Solution {
 	 * steps.
 	 */
 	public ArrayList<ArrayList<Integer>> fourSum(int[] num, int target) {
-		if (num == null || num.length < 4) {
-			return new ArrayList<ArrayList<Integer>>();
-		}
-
-		Arrays.sort(num);
-		HashMap<Integer, ArrayList<ArrayList<Integer>>> map = new HashMap<Integer, ArrayList<ArrayList<Integer>>>();
-		int len = num.length;
-		for (int i = len - 1; i > 0; i--) {
-			for (int j = i - 1; j >= 0;) {
-				int sum = num[i] + num[j];
-				ArrayList<Integer> pair = new ArrayList<Integer>(4);
-				pair.add(j);
-				pair.add(i);
-				pair.add(num[j]);
-				pair.add(num[i]);
-				if (map.containsKey(sum)) {
-					map.get(sum).add(pair);
-				} else {
-					ArrayList<ArrayList<Integer>> pairList = new ArrayList<ArrayList<Integer>>();
-					pairList.add(pair);
-					map.put(sum, pairList);
-				}
-				for (j = j - 1; j >= 0 && num[j] == num[j + 1];) {
-					j--;
-				}
-			}
-			while (i > 0 && num[i] == num[i - 1]) {
-				i--;
-			}
-		}
-
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		for (int i = 0; i < len - 1; i++) {
-			for (int j = i + 1; j < len;) {
-				int sum = num[i] + num[j];
-				int key = target - sum;
-				ArrayList<ArrayList<Integer>> pairList = map.get(key);
-				if (pairList != null) {
-					for (ArrayList<Integer> pair : pairList) {
-						if (pair.get(0) > j) {
-							ArrayList<Integer> quadruplet = new ArrayList<Integer>(
-									4);
-							quadruplet.add(num[i]);
-							quadruplet.add(num[j]);
-							quadruplet.add(pair.get(2));
-							quadruplet.add(pair.get(3));
-							result.add(quadruplet);
-						}
-					}
+		if (num == null || num.length < 4) {
+			return result;
+		}
+
+		Map<Integer, ArrayList<Pair>> map = new HashMap<Integer, ArrayList<Pair>>();
+		Arrays.sort(num);
+		int i = 0;
+		while (i < num.length - 3) {
+			int j = i + 1;
+			while (j < num.length - 2) {
+				Pair newPair = new Pair(i, j);
+				ArrayList<Pair> list = map.get(num[i] + num[j]);
+				if (list == null) {
+					list = new ArrayList<Pair>();
+					map.put(num[i] + num[j], list);
 				}
-				do {
+				list.add(newPair);
+				int curr = num[j];
+				while (j < num.length - 2 && num[j] == curr) {
 					j++;
-				} while (j < len && num[j] == num[j - 1]);
+				}
 			}
-			while (i < len - 1 && num[i] == num[i + 1]) {
+			int curr = num[i];
+			while (i < num.length - 3 && num[i] == curr) {
 				i++;
 			}
 		}
 
+		i = num.length - 1;
+		while (i > 2) {
+			int j = i - 1;
+			while (j > 1) {
+				int sum = num[i] + num[j];
+				ArrayList<Pair> list = map.get(target - sum);
+				if (list != null) {
+					for (Pair pair : list) {
+						if (j > pair.end) {
+							ArrayList<Integer> combination = new ArrayList<Integer>();
+							combination.add(num[pair.start]);
+							combination.add(num[pair.end]);
+							combination.add(num[j]);
+							combination.add(num[i]);
+							result.add(combination);
+						}
+					}
+				}
+				int curr = num[j];
+				while (j > 1 && curr == num[j]) {
+					j--;
+				}
+			}
+			int curr = num[i];
+			while (i > 2 && curr == num[i]) {
+				i--;
+			}
+		}
+
 		return result;
+	}
+
+	private class Pair {
+		int start;
+		int end;
+
+		public Pair(int start, int end) {
+			this.start = start;
+			this.end = end;
+		}
 	}
 
 	/**
@@ -2808,37 +2815,33 @@ public class Solution {
 	 */
 
 	public boolean isValid(String s) {
-		if (s == null || "".equals(s)) {
-			return true;
-		}
-		int len = s.length();
-		if (len % 2 == 1) {
+		if (s == null || (s.length() & 1) == 1) {
 			return false;
 		}
-		Stack<Character> stack = new Stack<Character>();
-		HashMap<Character, Character> pair = new HashMap<Character, Character>();
-		pair.put('(', ')');
-		pair.put('[', ']');
-		pair.put('{', '}');
-		for (int i = 0; i < len; i++) {
-			char c = s.charAt(i);
-			if (pair.containsKey(c)) {
-				stack.push(c);
+
+		Map<Character, Integer> map = new HashMap<Character, Integer>();
+		map.put('(', -1);
+		map.put(')', 1);
+		map.put('[', -2);
+		map.put(']', 2);
+		map.put('{', -3);
+		map.put('}', 3);
+
+		Stack<Integer> stack = new Stack<Integer>();
+		for (int i = 0; i < s.length(); i++) {
+			int num = map.get(s.charAt(i));
+			if (num < 0) {
+				stack.push(num);
 			} else {
-				if (stack.isEmpty()) {
+				if (stack.isEmpty() || stack.peek() + num != 0) {
 					return false;
 				} else {
-					char ch = stack.pop();
-					if (pair.get(ch) != c) {
-						return false;
-					}
+					stack.pop();
 				}
 			}
 		}
-		if (!stack.isEmpty()) {
-			return false;
-		}
-		return true;
+
+		return stack.isEmpty();
 	}
 
 	/**
@@ -3226,36 +3229,36 @@ public class Solution {
 	 */
 	public ArrayList<ArrayList<Integer>> pathSum(TreeNode root, int sum) {
 		ArrayList<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
-		if (root != null) {
-			ArrayList<Integer> path = new ArrayList<Integer>();
-			getPathSum(result, path, root, sum);
+		if (root == null) {
+			return result;
 		}
+
+		ArrayList<Integer> path = new ArrayList<Integer>();
+		pathSumDFS(result, path, root, sum);
 		return result;
 	}
 
-	private void getPathSum(ArrayList<ArrayList<Integer>> result,
+	private void pathSumDFS(ArrayList<ArrayList<Integer>> result,
 			ArrayList<Integer> path, TreeNode root, int sum) {
 		if (root.left == null && root.right == null) {
-			if (root.val == sum) {
-				ArrayList<Integer> newPath = new ArrayList<Integer>();
-				for (Integer n : path) {
-					newPath.add(n);
-				}
+			if (sum - root.val == 0) {
+				ArrayList<Integer> newPath = new ArrayList<Integer>(path);
 				newPath.add(root.val);
 				result.add(newPath);
 			}
 			return;
 		}
-		if (root.left != null) {
-			path.add(root.val);
-			getPathSum(result, path, root.left, sum - root.val);
-			path.remove(path.size() - 1);
+
+		path.add(root.val);
+		if (root.left != null && root.right != null) {
+			pathSumDFS(result, path, root.left, sum - root.val);
+			pathSumDFS(result, path, root.right, sum - root.val);
+		} else if (root.left != null) {
+			pathSumDFS(result, path, root.left, sum - root.val);
+		} else {
+			pathSumDFS(result, path, root.right, sum - root.val);
 		}
-		if (root.right != null) {
-			path.add(root.val);
-			getPathSum(result, path, root.right, sum - root.val);
-			path.remove(path.size() - 1);
-		}
+		path.remove(path.size() - 1);
 	}
 
 	/**
