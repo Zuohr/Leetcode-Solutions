@@ -2898,73 +2898,6 @@ public class Solution {
 	 */
 
 	/*
-	 * O(n^2), space O(n), not a good solution. Find all the peaks by comparing
-	 * with left and right element, store indices of them into an array, then
-	 * use two pointers point to the first and last peak, set water level to the
-	 * height of the lower peak, then fill water between two ends, then move the
-	 * lower peak toward the other one until it meets a higher peak, fill the
-	 * water higher than last water level, and so forth.
-	 */
-
-	public int trapBadSolution(int[] A) {
-		if (A == null || A.length < 3) {
-			return 0;
-		}
-		int len = A.length;
-		ArrayList<Integer> peaks = new ArrayList<Integer>();
-		if (A[0] > A[1]) {
-			peaks.add(0);
-		}
-		for (int i = 1; i < len - 1; i++) {
-			if (A[i] > A[i - 1] && A[i] >= A[i + 1] || A[i] >= A[i - 1]
-					&& A[i] > A[i + 1]) {
-				peaks.add(i);
-			}
-		}
-		if (A[len - 1] > A[len - 2]) {
-			peaks.add(len - 1);
-		}
-		int size = peaks.size();
-		if (size < 2) {
-			return 0;
-		}
-		int currlv = 0, lastlv = 0, sum = 0;
-		boolean mvright = true;
-		int l = 0, r = size - 1;
-		for (int start = peaks.get(l), end = peaks.get(r); start < end;) {
-			if (A[start] > A[end]) {
-				currlv = A[end];
-				mvright = false;
-			} else {
-				currlv = A[start];
-				mvright = true;
-			}
-			for (int i = start + 1; i < end; i++) {
-				if (A[i] < currlv) {
-					sum += currlv - Math.max(A[i], lastlv);
-				}
-			}
-			lastlv = currlv;
-			if (mvright) {
-				int ptr = l + 1;
-				while (ptr < r && A[peaks.get(ptr)] <= A[peaks.get(l)]) {
-					ptr++;
-				}
-				start = peaks.get(ptr);
-				l = ptr;
-			} else {
-				int ptr = r - 1;
-				while (ptr > l && A[peaks.get(ptr)] <= A[peaks.get(r)]) {
-					ptr--;
-				}
-				end = peaks.get(ptr);
-				r = ptr;
-			}
-		}
-		return sum;
-	}
-
-	/*
 	 * O(n) time, no extra space. This solution is based on an observation that
 	 * we can always use the height of the highest peak so far as water level
 	 * unless there is no higher peak in the future. Thus we can scan the whole
@@ -2976,31 +2909,29 @@ public class Solution {
 	 */
 
 	public int trap(int[] A) {
-		if (A == null || A.length < 3) {
+		if (A == null) {
 			return 0;
 		}
-		int len = A.length, peak = 0;
-		for (int i = 1; i < len; i++) {
-			if (A[i] > A[peak]) {
-				peak = i;
+
+		int peakPos = 0, peak = 0;
+		for (int i = 0; i < A.length; i++) {
+			if (A[i] > peak) {
+				peak = A[i];
+				peakPos = i;
 			}
 		}
-		int lv = 0, sum = 0;
-		for (int i = 0; i < peak; i++) {
-			if (A[i] < lv) {
-				sum += lv - A[i];
-			} else if (A[i] > lv) {
-				lv = A[i];
-			}
+
+		int sum = 0, currLevel = 0;
+		for (int i = 0; i < peakPos; i++) {
+			currLevel = Math.max(A[i], currLevel);
+			sum += currLevel - A[i];
 		}
-		lv = 0;
-		for (int i = len - 1; i > peak; i--) {
-			if (A[i] < lv) {
-				sum += lv - A[i];
-			} else if (A[i] > lv) {
-				lv = A[i];
-			}
+		currLevel = 0;
+		for (int i = A.length - 1; i > peakPos; i--) {
+			currLevel = Math.max(A[i], currLevel);
+			sum += currLevel - A[i];
 		}
+
 		return sum;
 	}
 
@@ -5696,40 +5627,37 @@ public class Solution {
 
 	public ArrayList<String> anagrams(String[] strs) {
 		ArrayList<String> result = new ArrayList<String>();
-		if (strs != null && strs.length > 0) {
-			HashMap<String, ArrayList<String>> m = new HashMap<String, ArrayList<String>>();
-			for (int i = 0; i < strs.length; i++) {
-				int[] map = new int[26];
-				String s = strs[i];
-				for (int j = 0; j < s.length(); j++) {
-					map[s.charAt(j) - 'a']++;
-				}
-				StringBuilder sig = new StringBuilder();
-				for (int j = 0; j < map.length; j++) {
-					if (map[j] > 0) {
-						sig.append('a' + j);
-						sig.append(map[j]);
-					}
-				}
-				String sigStr = sig.toString();
-				ArrayList<String> list = m.get(sigStr);
-				if (list == null) {
-					ArrayList<String> newList = new ArrayList<String>();
-					newList.add(s);
-					m.put(sigStr, newList);
-				} else {
-					list.add(s);
-				}
+		if (strs == null) {
+			return result;
+		}
+
+		Map<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
+		for (String str : strs) {
+			char[] chs = new char[26];
+			for (int i = 0; i < str.length(); i++) {
+				chs[str.charAt(i) - 'a']++;
 			}
-			for (String key : m.keySet()) {
-				ArrayList<String> list = m.get(key);
-				if (list.size() > 1) {
-					for (String str : list) {
-						result.add(str);
-					}
-				}
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < chs.length; i++) {
+				sb.append((char) ('a' + i));
+				sb.append(chs[i]);
+			}
+			String pattern = sb.toString();
+			ArrayList<String> list = map.get(pattern);
+			if (list == null) {
+				list = new ArrayList<String>();
+				map.put(pattern, list);
+			}
+			list.add(str);
+		}
+
+		for (String pattern : map.keySet()) {
+			ArrayList<String> list = map.get(pattern);
+			if (list.size() > 1) {
+				result.addAll(list);
 			}
 		}
+
 		return result;
 	}
 
@@ -6226,39 +6154,41 @@ public class Solution {
 
 	public ArrayList<Integer> spiralOrder(int[][] matrix) {
 		ArrayList<Integer> result = new ArrayList<Integer>();
-		if (matrix == null || matrix.length == 0 || matrix[0] == null || matrix[0].length == 0) {
-		    return result;
+		if (matrix == null || matrix.length == 0 || matrix[0] == null
+				|| matrix[0].length == 0) {
+			return result;
 		}
-		
+
 		int[][] dirs = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
 		int ht = matrix.length, wd = matrix[0].length, dir = 0, currRow = 0, currCol = 0;
 		int left = -1, right = wd, up = 0, down = ht;
 		for (int i = 0; i < ht * wd; i++) {
-		    result.add(matrix[currRow][currCol]);
-		    int nextRow = currRow + dirs[dir][0], nextCol = currCol + dirs[dir][1];
-		    boolean turn = false;
-		    if (dir == 0 && nextCol == right) {
-		        right--;
-		        turn = true;
-		    } else if (dir == 1 && nextRow == down) {
-		        down--;
-		        turn = true;
-		    } else if (dir == 2 && nextCol == left) {
-		        left++;
-		        turn = true;
-		    } else if (dir == 3 && nextRow == up) {
-		        up++;
-		        turn = true;
-	        }
-	        if (turn) {
-	            dir = (dir + 1) % 4;
-	            nextRow = currRow + dirs[dir][0];
-	            nextCol = currCol + dirs[dir][1];
-	        }
-	        currRow = nextRow;
-	        currCol = nextCol;
+			result.add(matrix[currRow][currCol]);
+			int nextRow = currRow + dirs[dir][0], nextCol = currCol
+					+ dirs[dir][1];
+			boolean turn = false;
+			if (dir == 0 && nextCol == right) {
+				right--;
+				turn = true;
+			} else if (dir == 1 && nextRow == down) {
+				down--;
+				turn = true;
+			} else if (dir == 2 && nextCol == left) {
+				left++;
+				turn = true;
+			} else if (dir == 3 && nextRow == up) {
+				up++;
+				turn = true;
+			}
+			if (turn) {
+				dir = (dir + 1) % 4;
+				nextRow = currRow + dirs[dir][0];
+				nextCol = currCol + dirs[dir][1];
+			}
+			currRow = nextRow;
+			currCol = nextCol;
 		}
-		
+
 		return result;
 	}
 
