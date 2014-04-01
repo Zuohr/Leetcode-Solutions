@@ -1576,28 +1576,23 @@ public class Solution {
 	 */
 
 	public ArrayList<Integer> getRow(int rowIndex) {
-		ArrayList<Integer> result = new ArrayList<Integer>();
-		if (rowIndex >= 0) {
-			result.add(1);
-			for (int i = 1; i <= rowIndex; i++) {
-				ArrayList<Integer> newArr = new ArrayList<Integer>();
-				newArr.add(1);
-				for (int j = 1; j <= i - 1; j++) {
-					newArr.add(result.get(j) + result.get(j - 1));
-				}
-				newArr.add(1);
-				result = newArr;
-			}
+		if (rowIndex < 0) {
+			return null;
 		}
-		return result;
-	}
 
-	@Test
-	public void testGetRow() {
-		for (int i = -1; i < 10; i++) {
-			ArrayList<Integer> result = getRow(i);
-			System.out.println(i + ":" + result);
+		ArrayList<Integer> last = new ArrayList<Integer>();
+		last.add(1);
+		for (int i = 0; i < rowIndex; i++) {
+			ArrayList<Integer> curr = new ArrayList<Integer>();
+			curr.add(1);
+			for (int j = 0; j < last.size() - 1; j++) {
+				curr.add(last.get(j) + last.get(j + 1));
+			}
+			curr.add(1);
+			last = curr;
 		}
+
+		return last;
 	}
 
 	/**
@@ -2423,42 +2418,42 @@ public class Solution {
 	 */
 
 	public int search(int[] A, int target) {
-		int pivot = 0;
-		int start = 0, end = A.length - 1;
-		while (start <= end) {
-			int mid = (start + end) / 2;
-			if (start == end) {
-				pivot = start;
-				break;
-			}
-			if (A[mid] > A[end]) {
-				start = mid + 1;
-			} else {
-				end = mid;
-			}
-		}
-
-		if (target == A[pivot]) {
-			return pivot;
-		} else if (target > A[pivot] && target <= A[A.length - 1]) {
-			start = pivot;
-			end = A.length - 1;
-		} else {
-			start = 0;
-			end = pivot - 1;
-		}
-		while (start <= end) {
-			int mid = (start + end) / 2;
-			if (target == A[mid]) {
-				return mid;
-			} else if (target < A[mid]) {
-				end = mid - 1;
-			} else {
-				start = mid + 1;
-			}
-		}
-		return -1;
-	}
+        if (A == null) {
+            return -1;
+        }
+        
+        int start = 0, end = A.length - 1;
+        while (start <= end) {
+            int mid = start + (end - start) / 2;
+            if (A[mid] == target) {
+                return mid;
+            } else {
+                if (A[mid] > target) {
+                    if (A[mid] < A[0]) {
+                        end = mid - 1;
+                    } else {
+                        if (target >= A[0]) {
+                            end = mid - 1;
+                        } else {
+                            start = mid + 1;
+                        }
+                    }
+                } else {
+                    if (A[mid] < A[0]) {
+                        if (target >= A[0]) {
+                            end = mid - 1;
+                        } else {
+                            start = mid + 1;
+                        }
+                    } else {
+                        start = mid + 1;
+                    }
+                }
+            }
+        }
+        
+        return -1;
+    }
 
 	/**
 	 * $(Search in Rotated Sorted Array II)
