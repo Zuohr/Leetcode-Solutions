@@ -1422,62 +1422,28 @@ public class Solution {
 	 */
 
 	public int[][] generateMatrix(int n) {
-		if (n == 0) {
-			return new int[][] {};
+		if (n < 0) {
+			return null;
 		}
-		int[][] directions = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
-		final int right = 0, down = 1, left = 2, up = 3, row = 0, col = 1;
-		int state = right;
-		int[][] m = new int[n][n];
-		int num = n * n;
-		int index = 1;
-		m[0][0] = index++;
-		int r = 0, c = 0;
-		for (int i = 1; i < num; i++) {
-			switch (state) {
-			case right:
-				if (needTurn(r, c + 1, n, m)) {
-					state = (state + 1) % 4;
-				}
-				break;
-			case down:
-				if (needTurn(r + 1, c, n, m)) {
-					state = (state + 1) % 4;
-				}
-				break;
-			case left:
-				if (needTurn(r, c - 1, n, m)) {
-					state = (state + 1) % 4;
-				}
-				break;
-			case up:
-				if (needTurn(r - 1, c, n, m)) {
-					state = (state + 1) % 4;
-				}
-				break;
+
+		int[][] result = new int[n][n];
+		int[][] dirs = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
+		int currRow = 0, currCol = 0, dir = 0;
+		for (int i = 1; i <= n * n; i++) {
+			result[currRow][currCol] = i;
+			int nextRow = currRow + dirs[dir][0], nextCol = currCol
+					+ dirs[dir][1];
+			if (nextRow < 0 || nextRow == n || nextCol < 0 || nextCol == n
+					|| result[nextRow][nextCol] != 0) {
+				dir = (dir + 1) % 4;
+				nextRow = currRow + dirs[dir][0];
+				nextCol = currCol + dirs[dir][1];
 			}
-			r += directions[state][row];
-			c += directions[state][col];
-			m[r][c] = index++;
+			currRow = nextRow;
+			currCol = nextCol;
 		}
 
-		return m;
-	}
-
-	private boolean needTurn(int row, int col, int n, int[][] m) {
-		if (row < 0 || row > n - 1 || col < 0 || col > n - 1
-				|| m[row][col] != 0) {
-			return true;
-		}
-		return false;
-	}
-
-	@Test
-	public void testGenerateMatrix() {
-		int m[][] = generateMatrix(0);
-		for (int[] arr : m) {
-			System.out.println(Arrays.toString(arr));
-		}
+		return result;
 	}
 
 	/**
