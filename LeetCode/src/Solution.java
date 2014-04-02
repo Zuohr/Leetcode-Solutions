@@ -2498,6 +2498,23 @@ public class Solution {
 		}
 		return false;
 	}
+	
+	/*
+	 * simple iterate the array
+	 */
+	public boolean searchSimple(int[] A, int target) {
+        if (A == null) {
+            return false;
+        }
+        
+        for (int i = 0; i < A.length; i++) {
+            if (target == A[i]) {
+                return true;
+            }
+        }
+        
+        return false;
+	}
 
 	/**
 	 * $(Two Sum)
