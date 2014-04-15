@@ -2,10 +2,7 @@ import org.junit.Test;
 
 public class test {
 	public static void main(String[] args) {
-		int i = Integer.MIN_VALUE;
-		System.out.println(Integer.toBinaryString(i));
-		int j = ~i + 1;
-		System.out.println(j);
+		
 	}
 
 	public static ListNode customersToNotify(ListNode myList, int k) {
@@ -24,13 +21,13 @@ public class test {
 
 		return back;
 	}
-	
+
 	@Test
 	public void testist() {
 		ListNode head = new ListNode();
 		head.customerId = 0;
 		ListNode ptr = head;
-		
+
 		for (int i = 0; i < 5; i++) {
 			ptr.next = new ListNode();
 			ptr = ptr.next;
@@ -39,12 +36,12 @@ public class test {
 		ptr = head;
 		print(ptr);
 		if (ptr.customerId == 0) {
-		throw new IllegalArgumentException("");
+			throw new IllegalArgumentException("");
 		}
 		System.out.println();
 		print(customersToNotify(head, 6));
 	}
-	
+
 	public void print(ListNode node) {
 		while (node != null) {
 			System.out.print(node.customerId + " -> ");
