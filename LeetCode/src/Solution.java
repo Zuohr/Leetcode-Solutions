@@ -2418,42 +2418,42 @@ public class Solution {
 	 */
 
 	public int search(int[] A, int target) {
-        if (A == null) {
-            return -1;
-        }
-        
-        int start = 0, end = A.length - 1;
-        while (start <= end) {
-            int mid = start + (end - start) / 2;
-            if (A[mid] == target) {
-                return mid;
-            } else {
-                if (A[mid] > target) {
-                    if (A[mid] < A[0]) {
-                        end = mid - 1;
-                    } else {
-                        if (target >= A[0]) {
-                            end = mid - 1;
-                        } else {
-                            start = mid + 1;
-                        }
-                    }
-                } else {
-                    if (A[mid] < A[0]) {
-                        if (target >= A[0]) {
-                            end = mid - 1;
-                        } else {
-                            start = mid + 1;
-                        }
-                    } else {
-                        start = mid + 1;
-                    }
-                }
-            }
-        }
-        
-        return -1;
-    }
+		if (A == null) {
+			return -1;
+		}
+
+		int start = 0, end = A.length - 1;
+		while (start <= end) {
+			int mid = start + (end - start) / 2;
+			if (A[mid] == target) {
+				return mid;
+			} else {
+				if (A[mid] > target) {
+					if (A[mid] < A[0]) {
+						end = mid - 1;
+					} else {
+						if (target >= A[0]) {
+							end = mid - 1;
+						} else {
+							start = mid + 1;
+						}
+					}
+				} else {
+					if (A[mid] < A[0]) {
+						if (target >= A[0]) {
+							end = mid - 1;
+						} else {
+							start = mid + 1;
+						}
+					} else {
+						start = mid + 1;
+					}
+				}
+			}
+		}
+
+		return -1;
+	}
 
 	/**
 	 * $(Search in Rotated Sorted Array II)
@@ -2498,22 +2498,22 @@ public class Solution {
 		}
 		return false;
 	}
-	
+
 	/*
 	 * simple iterate the array
 	 */
 	public boolean searchSimple(int[] A, int target) {
-        if (A == null) {
-            return false;
-        }
-        
-        for (int i = 0; i < A.length; i++) {
-            if (target == A[i]) {
-                return true;
-            }
-        }
-        
-        return false;
+		if (A == null) {
+			return false;
+		}
+
+		for (int i = 0; i < A.length; i++) {
+			if (target == A[i]) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -3241,16 +3241,18 @@ public class Solution {
 	 */
 
 	public int lengthOfLastWord(String s) {
-		if (s == null || s.length() == 0) {
-			return 0;
-		}
-		int count = 0, ptr = s.length() - 1;
-		while (ptr >= 0 && s.charAt(ptr) != ' ') {
-			count++;
-			ptr--;
-		}
-		return count;
-	}
+        if (s == null || s.isEmpty()) {
+            return 0;
+        }
+        
+        s = s.trim();
+        int index = s.length() - 1;
+        while (index >= 0 && s.charAt(index) != ' ') {
+            index--;
+        }
+        
+        return s.length() - 1 - index;
+    }
 
 	/**
 	 * $(Valid Sudoku)
@@ -4264,59 +4266,39 @@ public class Solution {
 	 */
 
 	public String addBinary(String a, String b) {
-		if (a == null || a.length() == 0) {
-			return b;
-		} else if (b == null || b.length() == 0) {
-			return a;
-		}
-
-		String temp;
-		if (b.length() > a.length()) {
-			temp = a;
-			a = b;
-			b = temp;
-		}
-
-		int[] l1 = new int[a.length()];
-		int len = l1.length;
-		for (int i = 0; i < len; i++) {
-			l1[i] = a.charAt(len - 1 - i) - '0';
-		}
-
-		int[] l2 = new int[b.length()];
-		len = l2.length;
-		for (int i = 0; i < len; i++) {
-			l2[i] = b.charAt(len - 1 - i) - '0';
-		}
-
-		int carry = 0, i = 0;
-		for (; i < l2.length; i++) {
-			l1[i] = l1[i] + l2[i] + carry;
-			carry = 0;
-			if (l1[i] >= 2) {
-				l1[i] -= 2;
-				carry = 1;
-			}
-		}
-		String head = "";
-		for (; i < l1.length && carry == 1; i++) {
-			l1[i] = l1[i] + carry;
-			carry = 0;
-			if (l1[i] >= 2) {
-				l1[i] -= 2;
-				carry = 1;
-			}
-		}
-		if (carry == 1) {
-			head = "1";
-		}
-		String result = head;
-		len = l1.length;
-		for (i = len - 1; i >= 0; i--) {
-			result += String.valueOf(l1[i]);
-		}
-		return result;
-	}
+        if (a == null || a.isEmpty()) {
+            return b;
+        } else if (b == null || b.isEmpty()) {
+            return a;
+        }
+        
+        if (a.length() < b.length()) {
+            return addBinary(b, a);
+        }
+        
+        a = new StringBuilder(a).reverse().toString();
+        b = new StringBuilder(b).reverse().toString();
+        StringBuilder result = new StringBuilder();
+        int index = 0, carry = 0;
+        for (; index < b.length(); index++) {
+            int sum = (a.charAt(index) - '0') + (b.charAt(index) - '0') + carry;
+            result.append((char) ('0' + sum % 2));
+            carry = sum / 2;
+        }
+        
+        while (index < a.length()) {
+            int sum = (a.charAt(index) - '0') + carry;
+            result.append((char) ('0' + sum % 2));
+            carry = sum / 2;
+            index++;
+        }
+        
+        if (carry == 1) {
+            result.append('1');
+        }
+        
+        return new StringBuilder(result).reverse().toString();
+    }
 
 	/**
 	 * $(Merge Intervals)
@@ -4871,10 +4853,44 @@ public class Solution {
 	 */
 
 	/*
+	 * similar to bucket sort
+	 */
+	public int firstMissingPositive(int[] A) {
+		if (A == null || A.length == 0) {
+			return 1;
+		}
+
+		for (int i = 0; i < A.length; i++) {
+			while (A[i] != i + 1) {
+				if (A[i] > A.length || A[i] <= 0 || A[i] == A[A[i] - 1]) {
+					break;
+				} else {
+					arrSwap(A, i, A[i] - 1);
+				}
+			}
+		}
+
+		for (int i = 0; i < A.length; i++) {
+			if (A[i] != i + 1) {
+				return i + 1;
+			}
+		}
+		return A.length + 1;
+	}
+
+	private void arrSwap(int[] A, int p1, int p2) {
+		if (p1 != p2) {
+			A[p1] ^= A[p2];
+			A[p2] ^= A[p1];
+			A[p1] ^= A[p2];
+		}
+	}
+
+	/*
 	 * Use two pointers: left and right, and mantain following invariant:
 	 * A[0]...A[left - 1] are ordered from 1 to left, exclude left;
 	 */
-	public int firstMissingPositive(int[] A) {
+	public int firstMissingPositive2(int[] A) {
 		if (A == null || A.length == 0) {
 			return 1;
 		}
@@ -4906,6 +4922,9 @@ public class Solution {
 	 * Compute and return the square root of x.
 	 */
 
+	/*
+	 * Newton's method
+	 */
 	public int sqrt(int x) {
 		if (x <= 1) {
 			return x;
@@ -4919,6 +4938,31 @@ public class Solution {
 			result--;
 		}
 		return result;
+	}
+
+	/*
+	 * divide and conquer
+	 */
+	public int sqrt2(int x) {
+		if (x <= 0) {
+			return 0;
+		}
+
+		int cap = (int) Math.sqrt(Integer.MAX_VALUE);
+		int start = 0, end = Math.min(x, cap);
+		while (start <= end) {
+			int mid = start + (end - start) / 2;
+			int product = mid * mid;
+			if (product == x) {
+				return mid;
+			} else if (product < x) {
+				start = mid + 1;
+			} else {
+				end = mid - 1;
+			}
+		}
+
+		return (start + end) / 2;
 	}
 
 	@Test
@@ -5684,7 +5728,7 @@ public class Solution {
 	@Test
 	public void testConvert() {
 		String s = "PAYPALISHIRING";
-		System.out.println(convert(s, 3));
+		System.out.println(convert(s, 4));
 	}
 
 	/**
